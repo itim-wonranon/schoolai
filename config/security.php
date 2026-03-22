@@ -3,10 +3,6 @@
 // Security Configuration & Helpers
 // ============================================
 
-// --- Rate Limiting ---
-define('MAX_LOGIN_ATTEMPTS', 5);
-define('LOGIN_LOCKOUT_MINUTES', 15);
-
 // --- Session Security ---
 define('SESSION_IDLE_TIMEOUT', 1800);       // 30 minutes
 define('SESSION_REGENERATE_INTERVAL', 300); // 5 minutes
@@ -101,39 +97,16 @@ function validateSession(): bool {
 }
 
 /**
- * Record a failed login attempt.
+ * Record a failed login attempt (Disabled as requested).
  */
 function recordFailedAttempt(PDO $pdo, string $username): void {
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-    $stmt = $pdo->prepare("INSERT INTO login_attempts (ip_address, username) VALUES (?, ?)");
-    $stmt->execute([$ip, $username]);
+    // System disabled
 }
 
 /**
- * Check whether the current IP / username is rate-limited.
+ * Check whether the current IP / username is rate-limited (Disabled as requested).
  */
 function isRateLimited(PDO $pdo, string $username): bool {
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-    $since = date('Y-m-d H:i:s', time() - (LOGIN_LOCKOUT_MINUTES * 60));
-
-    // Check by IP
-    $stmt = $pdo->prepare(
-        "SELECT COUNT(*) FROM login_attempts WHERE ip_address = ? AND attempted_at > ?"
-    );
-    $stmt->execute([$ip, $since]);
-    if ((int) $stmt->fetchColumn() >= MAX_LOGIN_ATTEMPTS) {
-        return true;
-    }
-
-    // Check by username
-    $stmt = $pdo->prepare(
-        "SELECT COUNT(*) FROM login_attempts WHERE username = ? AND attempted_at > ?"
-    );
-    $stmt->execute([$username, $since]);
-    if ((int) $stmt->fetchColumn() >= MAX_LOGIN_ATTEMPTS) {
-        return true;
-    }
-
     return false;
 }
 
@@ -141,6 +114,5 @@ function isRateLimited(PDO $pdo, string $username): bool {
  * Purge old login attempts (housekeeping).
  */
 function purgeOldAttempts(PDO $pdo): void {
-    $cutoff = date('Y-m-d H:i:s', time() - (LOGIN_LOCKOUT_MINUTES * 60 * 4));
-    $pdo->prepare("DELETE FROM login_attempts WHERE attempted_at < ?")->execute([$cutoff]);
+    // Optional: Keep purging if you want to clean old data, but logic is disabled anyway
 }

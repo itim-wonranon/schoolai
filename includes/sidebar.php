@@ -10,13 +10,15 @@ $role = getUserRole();
     </div>
     <nav class="sidebar-nav">
         <ul class="sidebar-menu">
-            <!-- Dashboard -->
+            <!-- Dashboard (Admin Only) -->
+            <?php if ($role === 'admin'): ?>
             <li class="menu-item <?php echo $current_page === 'index' ? 'active' : ''; ?>">
                 <a href="<?php echo $base_url; ?>/index.php">
                     <i class="bi bi-speedometer2"></i>
                     <span>แดชบอร์ด</span>
                 </a>
             </li>
+            <?php endif; ?>
 
             <!-- Super Admin Section -->
             <?php if ($role === 'admin'): ?>

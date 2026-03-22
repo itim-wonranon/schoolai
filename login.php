@@ -6,7 +6,12 @@ require_once __DIR__ . '/includes/session_check.php';
 
 // Redirect if already logged in
 if (isLoggedIn()) {
-    header('Location: index.php');
+    $role = getUserRole();
+    if ($role === 'admin') {
+        header('Location: index.php');
+    } else {
+        header('Location: my_schedule.php');
+    }
     exit;
 }
 
@@ -30,13 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif (empty($username) || empty($password)) {
         $error = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน';
     } 
-    // 3. Check for rate limiting
-    elseif (isRateLimited($pdo, $username)) {
-        logActivity('login_blocked', "Rate limit exceeded for user: $username");
-        $error = 'คุณระบุรหัสผ่านผิดเกินจำนวนครั้งที่กำหนด กรุณาลองใหม่ในอีก ' . LOGIN_LOCKOUT_MINUTES . ' นาที';
-    } 
     else {
-        // 4. Authenticate User
+        // 3. Authenticate User
         $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND is_active = 1 LIMIT 1");
         $stmt->execute([$username]);
         $user = $stmt->fetch();
@@ -68,17 +68,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtUpdate = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
             $stmtUpdate->execute([$user['id']]);
 
-            // Purge old attempts for this IP/user
-            purgeOldAttempts($pdo);
-
             // Audit Log
             logActivity('login_success', 'User logged in successfully');
 
-            header('Location: index.php');
+            if ($user['role'] === 'admin') {
+                header('Location: index.php');
+            } else {
+                header('Location: my_schedule.php');
+            }
             exit;
         } else {
-            // Failure: Record attempt and show generic error
-            recordFailedAttempt($pdo, $username);
+            // Failure: Show generic error
             logActivity('login_failed', "Failed login attempt for username: $username");
             $error = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
         }

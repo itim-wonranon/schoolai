@@ -1,13 +1,19 @@
 <?php
 require_once __DIR__ . '/includes/session_check.php';
 requireLogin();
-$page_title = 'แดชบอร์ด - โรงเรียนสาธิตวิทยา';
+
 $role = getUserRole();
+// Restrict dashboard to admin only
+if ($role !== 'admin') {
+    header('Location: my_schedule.php');
+    exit;
+}
+
+$page_title = 'แดชบอร์ด - โรงเรียนสาธิตวิทยา';
 require_once __DIR__ . '/includes/layout_header.php';
 ?>
 
-<?php if ($role === 'admin'): ?>
-<!-- Admin Dashboard -->
+<!-- Admin Dashboard Stats -->
 <div class="page-header">
     <h1><i class="bi bi-speedometer2"></i> แดชบอร์ดผู้บริหาร</h1>
 </div>
@@ -65,48 +71,5 @@ require_once __DIR__ . '/includes/layout_header.php';
         </div>
     </div>
 </div>
-
-<?php elseif ($role === 'teacher'): ?>
-<!-- Teacher Dashboard -->
-<div class="page-header">
-    <h1><i class="bi bi-speedometer2"></i> แดชบอร์ดครูผู้สอน</h1>
-</div>
-<div class="card mb-4">
-    <div class="card-header"><i class="bi bi-calendar-week"></i> ตารางสอนของฉัน</div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="data-table" id="myScheduleTable">
-                <thead>
-                    <tr><th>วัน</th><th>เวลา</th><th>วิชา</th><th>ครู</th><th>ห้อง</th><th>ชั้นเรียน</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="6" class="text-center py-4"><div class="loading-spinner"></div></td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<?php else: ?>
-<!-- Student Dashboard -->
-<div class="page-header">
-    <h1><i class="bi bi-speedometer2"></i> แดชบอร์ดนักเรียน</h1>
-</div>
-<div class="card mb-4">
-    <div class="card-header"><i class="bi bi-calendar-week"></i> ตารางเรียนของฉัน</div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="data-table" id="myScheduleTable">
-                <thead>
-                    <tr><th>วัน</th><th>เวลา</th><th>วิชา</th><th>ครู</th><th>ห้อง</th><th>ชั้นเรียน</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="6" class="text-center py-4"><div class="loading-spinner"></div></td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
 
 <?php require_once __DIR__ . '/includes/layout_footer.php'; ?>
