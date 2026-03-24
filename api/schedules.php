@@ -85,15 +85,23 @@ try {
             exit;
         }
 
+        // 3. Class (Student Group) conflict
+        $stmtClassConflict = $pdo->prepare("SELECT COUNT(*) FROM schedules WHERE class_id = ? AND day_of_week = ? AND ((start_time < ? AND end_time > ?) OR (start_time < ? AND end_time > ?) OR (start_time >= ? AND end_time <= ?)) AND id != ?");
+        $stmtClassConflict->execute([$data['class_id'], $data['day_of_week'], $data['end_time'], $data['start_time'], $data['end_time'], $data['end_time'], $data['start_time'], $data['end_time'], $id]);
+        if ($stmtClassConflict->fetchColumn() > 0) {
+            echo json_encode(['success' => false, 'message' => 'ชั้นเรียนนี้มีตารางเรียนอื่นทับซ้อนในช่วงเวลาดังกล่าว']);
+            exit;
+        }
+
         if ($method === 'POST') {
             $stmt = $pdo->prepare("INSERT INTO schedules (subject_id, teacher_id, class_id, classroom_id, day_of_week, period_id, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([$data['subject_id'], $data['teacher_id'], $data['class_id'], $data['classroom_id'], $data['day_of_week'], $data['period_id'] ?? null, $data['start_time'], $data['end_time']]);
-            logActivity('schedule_create', "Added schedule for " . $data['day_of_week']);
+            logActivity('schedule_create', "เพิ่มตารางเรียนสำหรับ วัน" . $data['day_of_week']);
             echo json_encode(['success' => true, 'message' => 'เพิ่มตารางเรียนสำเร็จ']);
         } else {
             $stmt = $pdo->prepare("UPDATE schedules SET subject_id=?, teacher_id=?, class_id=?, classroom_id=?, day_of_week=?, period_id=?, start_time=?, end_time=? WHERE id=?");
             $stmt->execute([$data['subject_id'], $data['teacher_id'], $data['class_id'], $data['classroom_id'], $data['day_of_week'], $data['period_id'] ?? null, $data['start_time'], $data['end_time'], $id]);
-            logActivity('schedule_update', "Updated schedule ID: $id");
+            logActivity('schedule_update', "อัปเดตตารางเรียน ID: $id");
             echo json_encode(['success' => true, 'message' => 'แก้ไขตารางเรียนสำเร็จ']);
         }
     }
@@ -101,7 +109,7 @@ try {
         $id = $_GET['id'] ?? 0;
         $stmt = $pdo->prepare("DELETE FROM schedules WHERE id = ?");
         $stmt->execute([$id]);
-        logActivity('schedule_delete', "Deleted schedule ID: $id");
+        logActivity('schedule_delete', "ลบตารางเรียน ID: $id");
         echo json_encode(['success' => true, 'message' => 'ลบตารางเรียนสำเร็จ']);
     }
 } catch (Exception $e) {

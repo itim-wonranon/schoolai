@@ -91,7 +91,7 @@ try {
         ];
     }
 
-    logActivity('bulk_import', "Performed bulk import for $importType", ['rows' => count($results)]);
+    logActivity('bulk_import', "ดำเนินการนำเข้าข้อมูลจำนวนมาก: $importType", ['rows' => count($results)]);
     echo json_encode(['success' => true, 'details' => $results]);
 
 } catch (Exception $e) {

@@ -26,7 +26,7 @@ try {
         }
 
         // Log the event
-        logActivity('impersonation_start', "Admin started impersonating user: " . $target['username'], ['target_id' => $user_id]);
+        logActivity('impersonation_start', "เริ่มการสวมรอยเป็นผู้ใช้: " . $target['username'], ['target_id' => $user_id]);
 
         // Switch identity
         $_SESSION['user_id'] = $target['id'];
@@ -50,7 +50,7 @@ try {
         $stmt->execute([$admin_id]);
         $admin = $stmt->fetch();
 
-        logActivity('impersonation_stop', "Admin stopped impersonation");
+        logActivity('impersonation_stop', "ยกเลิกการสวมรอย");
 
         // Restore identity
         $_SESSION['user_id'] = $admin['id'];

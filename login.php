@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($user && password_verify($password, $user['password_hash'])) {
             // Check for suspension
             if ($user['is_suspended']) {
-                logActivity('login_failed', "Suspended user tried to login: $username");
+                logActivity('login_failed', "เข้าสู่ระบบไม่สำเร็จ (บัญชีถูกระงับ): $username");
                 header('Location: login.php?error=account_suspended');
                 exit;
             }
@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtUpdate->execute([$user['id']]);
 
             // Audit Log
-            logActivity('login_success', 'User logged in successfully');
+            logActivity('login_success', 'เข้าสู่ระบบสำเร็จ');
 
             if ($user['role'] === 'admin') {
                 header('Location: index.php');
@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         } else {
             // Failure: Show generic error
-            logActivity('login_failed', "Failed login attempt for username: $username");
+            logActivity('login_failed', "เข้าสู่ระบบไม่สำเร็จ (ชื่อผู้ใช้หรือรหัสผ่านผิด): $username");
             $error = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
         }
     }

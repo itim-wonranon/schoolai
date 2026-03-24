@@ -107,6 +107,7 @@ require_once __DIR__ . '/../includes/layout_header.php';
                 </form>
             </div>
             <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-danger me-auto" id="btnDelete" onclick="deleteSchedule()" style="display:none;"><i class="bi bi-trash me-2"></i>ลบ</button>
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">ยกเลิก</button>
                 <button type="button" class="btn btn-primary px-4" onclick="submitSchedule()">บันทึกตารางเรียน</button>
             </div>
@@ -248,6 +249,7 @@ function autoFillTimes() {
 function openScheduleModal() {
     $('#scheduleForm')[0].reset();
     $('#edit_id').val('');
+    $('#btnDelete').hide();
     $('#modalTitle').text('เพิ่มข้อมูลตารางเรียน');
     const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
     modal.show();
@@ -264,9 +266,29 @@ function editScheduleEntry(id) {
         $('#sch_period').val(s.period_id);
         $('#sch_start').val(s.start_time);
         $('#sch_end').val(s.end_time);
+        $('#btnDelete').show();
         $('#modalTitle').text('แก้ไขข้อมูลตารางเรียน');
         const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
         modal.show();
+    });
+}
+
+function deleteSchedule() {
+    const id = $('#edit_id').val();
+    if (!id || !confirm('ยืนยันการลบตารางเรียนนี้?')) return;
+
+    $.ajax({
+        url: BASE_URL + '/api/schedules.php?id=' + id,
+        method: 'DELETE',
+        success: function(res) {
+            if (res.success) {
+                showToast(res.message, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
+                loadTimetable();
+            } else {
+                showToast(res.message, 'error');
+            }
+        }
     });
 }
 

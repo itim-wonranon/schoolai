@@ -11,7 +11,20 @@ try {
         // Metadata lookups for dropdowns
         if (isset($_GET['type'])) {
             $type = $_GET['type'];
-            if ($type === 'classes') {
+            if ($type === 'stats') {
+                $total = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+                $admins = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
+                $teachers = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'teacher'")->fetchColumn();
+                $students = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'student'")->fetchColumn();
+                $suspended = $pdo->query("SELECT COUNT(*) FROM users WHERE is_suspended = 1")->fetchColumn();
+                echo json_encode([
+                    'total' => $total,
+                    'admins' => $admins,
+                    'teachers' => $teachers,
+                    'students' => $students,
+                    'suspended' => $suspended
+                ]);
+            } elseif ($type === 'classes') {
                 $stmt = $pdo->query("SELECT id, class_name FROM classes ORDER BY class_name");
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             } elseif ($type === 'teachers') {
@@ -28,7 +41,7 @@ try {
         }
 
         if (isset($_GET['id'])) {
-            $stmt = $pdo->prepare("SELECT id, username, display_name, role, role_id, is_suspended, last_login FROM users WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, username, display_name, role, is_suspended, last_login, created_at FROM users WHERE id = ?");
             $stmt->execute([$_GET['id']]);
             echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));
         } else {
@@ -36,7 +49,7 @@ try {
             $role = $_GET['role'] ?? '';
             $status = $_GET['status'] ?? '';
             
-            $sql = "SELECT id, username, display_name, role, role_id, is_suspended, last_login FROM users WHERE 1=1";
+            $sql = "SELECT id, username, display_name, role, is_suspended, last_login, created_at FROM users WHERE 1=1";
             $params = [];
             
             if ($search) {
@@ -73,28 +86,26 @@ try {
         
         $passHash = password_hash($data['password'] ?: '123456', PASSWORD_DEFAULT);
         
-        $stmt = $pdo->prepare("INSERT INTO users (username, password_hash, display_name, role, role_id, is_suspended, is_active) VALUES (?, ?, ?, ?, (SELECT id FROM roles WHERE role_key = ?), ?, 1)");
+        $stmt = $pdo->prepare("INSERT INTO users (username, password_hash, display_name, role, is_suspended, is_active) VALUES (?, ?, ?, ?, ?, 1)");
         $stmt->execute([
             $data['username'],
             $passHash,
             $data['display_name'],
             $data['role'],
-            $data['role'],
             $data['is_suspended'] ?? 0
         ]);
         
-        logActivity('user_create', "Created new user: " . $data['username']);
+        logActivity('user_create', "สร้างผู้ใช้ใหม่: " . $data['username']);
         echo json_encode(['success' => true, 'message' => 'สร้างผู้ใช้สำเร็จ']);
     }
     elseif ($method === 'PUT') {
         $data = json_decode(file_get_contents('php://input'), true);
         $id = $data['id'];
         
-        $sql = "UPDATE users SET username = ?, display_name = ?, role = ?, role_id = (SELECT id FROM roles WHERE role_key = ?), is_suspended = ?";
+        $sql = "UPDATE users SET username = ?, display_name = ?, role = ?, is_suspended = ?";
         $params = [
             $data['username'],
             $data['display_name'],
-            $data['role'],
             $data['role'],
             $data['is_suspended']
         ];
@@ -110,7 +121,7 @@ try {
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         
-        logActivity('user_update', "Updated user ID: $id", ['username' => $data['username']]);
+        logActivity('user_update', "อัปเดตข้อมูลผู้ใช้ ID: $id (" . ($data['username'] ?? '') . ")");
         echo json_encode(['success' => true, 'message' => 'อัปเดตข้อมูลสำเร็จ']);
     }
 } catch (Exception $e) {

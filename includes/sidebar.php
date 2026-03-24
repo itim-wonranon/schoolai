@@ -24,67 +24,20 @@ $role = getUserRole();
             <?php if ($role === 'admin'): ?>
             <li class="menu-divider" style="padding:15px 15px 5px;font-size:0.75rem;color:#64748B;font-weight:bold;text-transform:uppercase;">Super Admin</li>
             
-            <li class="menu-item has-submenu <?php echo in_array($current_page, ['admin_users','admin_roles','admin_impersonate']) ? 'open' : ''; ?>">
-                <a href="#" class="submenu-toggle">
-                    <i class="bi bi-shield-lock-fill"></i>
-                    <span>จัดการสิทธิ์ & ผู้ใช้</span>
-                    <i class="bi bi-chevron-down submenu-arrow"></i>
+            <li class="menu-item <?php echo $current_page === 'admin_users' ? 'active' : ''; ?>">
+                <a href="<?php echo $base_url; ?>/admin/users.php">
+                    <i class="bi bi-person-check-fill"></i>
+                    <span>จัดการสิทธิ์ผู้ใช้งาน</span>
                 </a>
-                <ul class="submenu">
-                    <li class="<?php echo $current_page === 'admin_users' ? 'active' : ''; ?>">
-                        <a href="<?php echo $base_url; ?>/admin/users.php"><i class="bi bi-people-fill"></i> ผู้ใช้งานทั้งหมด</a>
-                    </li>
-                    <li class="<?php echo $current_page === 'admin_roles' ? 'active' : ''; ?>">
-                        <a href="<?php echo $base_url; ?>/admin/roles.php"><i class="bi bi-key-fill"></i> กำหนดสิทธิ์ (RBAC)</a>
-                    </li>
-                </ul>
             </li>
 
-            <li class="menu-item has-submenu <?php echo in_array($current_page, ['admin_academic','admin_curriculum']) ? 'open' : ''; ?>">
-                <a href="#" class="submenu-toggle">
-                    <i class="bi bi-gear-wide-connected"></i>
-                    <span>โครงสร้างข้อมูลหลัก</span>
-                    <i class="bi bi-chevron-down submenu-arrow"></i>
-                </a>
-                <ul class="submenu">
-                    <li class="<?php echo $current_page === 'admin_academic' ? 'active' : ''; ?>">
-                        <a href="<?php echo $base_url; ?>/admin/academic_years.php"><i class="bi bi-calendar-event"></i> ปีการศึกษา/เทอม</a>
-                    </li>
-                    <li class="<?php echo $current_page === 'admin_curriculum' ? 'active' : ''; ?>">
-                        <a href="<?php echo $base_url; ?>/admin/curriculum.php"><i class="bi bi-journal-check"></i> หลักสูตร/กลุ่มสาระ</a>
-                    </li>
-                </ul>
-            </li>
-
-            <li class="menu-item has-submenu <?php echo in_array($current_page, ['admin_logs','admin_sessions','admin_history']) ? 'open' : ''; ?>">
-                <a href="#" class="submenu-toggle">
+            <li class="menu-item <?php echo $current_page === 'admin_logs' ? 'active' : ''; ?>">
+                <a href="<?php echo $base_url; ?>/admin/audit_logs.php">
                     <i class="bi bi-fingerprint"></i>
-                    <span>ความปลอดภัย & Log</span>
-                    <i class="bi bi-chevron-down submenu-arrow"></i>
-                </a>
-                <ul class="submenu">
-                    <li class="<?php echo $current_page === 'admin_logs' ? 'active' : ''; ?>">
-                        <a href="<?php echo $base_url; ?>/admin/audit_logs.php"><i class="bi bi-list-columns"></i> Activity Logs</a>
-                    </li>
-                    <li class="<?php echo $current_page === 'admin_sessions' ? 'active' : ''; ?>">
-                        <a href="<?php echo $base_url; ?>/admin/sessions.php"><i class="bi bi-broadcast"></i> เซสชั่นที่ออนไลน์</a>
-                    </li>
-                </ul>
-            </li>
-
-            <li class="menu-item <?php echo $current_page === 'admin_announcements' ? 'active' : ''; ?>">
-                <a href="<?php echo $base_url; ?>/admin/announcements.php">
-                    <i class="bi bi-megaphone"></i>
-                    <span>ประกาศข่าวสาร</span>
+                    <span>Activity Logs</span>
                 </a>
             </li>
 
-            <li class="menu-item <?php echo $current_page === 'admin_settings' ? 'active' : ''; ?>">
-                <a href="<?php echo $base_url; ?>/admin/settings.php">
-                    <i class="bi bi-sliders"></i>
-                    <span>ตั้งค่าระบบ (CMS)</span>
-                </a>
-            </li>
             <div style="margin-bottom: 20px;"></div>
             <?php endif; ?>
             

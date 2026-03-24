@@ -65,11 +65,12 @@ try {
         `id` INT AUTO_INCREMENT PRIMARY KEY,
         `username` VARCHAR(50) NOT NULL UNIQUE,
         `password_hash` VARCHAR(255) NOT NULL,
-        `role` ENUM('admin','teacher','student') NOT NULL DEFAULT 'student',
+        `role` ENUM('admin','teacher','student','registrar','discipline') NOT NULL DEFAULT 'student',
         `ref_id` INT DEFAULT NULL COMMENT 'References teacher.id or student.id',
         `display_name` VARCHAR(200) DEFAULT NULL,
         `last_login` DATETIME DEFAULT NULL,
         `is_active` TINYINT(1) DEFAULT 1,
+        `is_suspended` TINYINT(1) DEFAULT 0,
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB");
 
@@ -268,22 +269,9 @@ try {
     $stmtAtt = $pdo->prepare("INSERT IGNORE INTO `attendance` (`schedule_id`,`student_id`,`attend_date`,`status`) VALUES (?,?,?,?)");
     foreach ($attendData as $a) $stmtAtt->execute($a);
 
-    // Create roles table
-    $pdo->exec("CREATE TABLE IF NOT EXISTS `roles` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
-        `role_name` VARCHAR(100) NOT NULL,
-        `role_key` VARCHAR(50) NOT NULL UNIQUE,
-        `permissions` TEXT COMMENT 'JSON permissions'
-    ) ENGINE=InnoDB");
+    // Roles table removed as per request to simplify RBAC
 
-    // Create academic_years table
-    $pdo->exec("CREATE TABLE IF NOT EXISTS `academic_years` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
-        `year` INT NOT NULL,
-        `term` VARCHAR(50) NOT NULL,
-        `is_current` TINYINT(1) DEFAULT 0,
-        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB");
+    // Academic years table removed as per request to remove Core Data Structure
 
     // Migrate academic_years schema if it already exists with old columns
     $colsYear = $pdo->query("DESCRIBE `academic_years`")->fetchAll(PDO::FETCH_ASSOC);
@@ -300,21 +288,9 @@ try {
         }
     }
 
-    // Create subject_groups table
-    $pdo->exec("CREATE TABLE IF NOT EXISTS `subject_groups` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
-        `name` VARCHAR(100) NOT NULL UNIQUE,
-        `description` TEXT,
-        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB");
+    // Subject groups table removed
 
-    // Create system_settings table
-    $pdo->exec("CREATE TABLE IF NOT EXISTS `system_settings` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
-        `setting_key` VARCHAR(100) NOT NULL UNIQUE,
-        `setting_value` TEXT,
-        `description` VARCHAR(255)
-    ) ENGINE=InnoDB");
+    // system_settings table removed
 
     // Create activity_logs table
     $pdo->exec("CREATE TABLE IF NOT EXISTS `activity_logs` (
@@ -328,21 +304,10 @@ try {
         FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
     ) ENGINE=InnoDB");
 
-    // Create announcements table
-    $pdo->exec("CREATE TABLE IF NOT EXISTS `announcements` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
-        `title` VARCHAR(255) NOT NULL,
-        `content` TEXT,
-        `target_role` VARCHAR(50) DEFAULT 'all',
-        `is_active` TINYINT(1) DEFAULT 1,
-        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB");
+    // announcements table removed
 
-    // Add role_id and is_suspended to users table if they don't exist
+    // Migration for is_suspended
     $cols = $pdo->query("DESCRIBE `users`")->fetchAll(PDO::FETCH_COLUMN);
-    if (!in_array('role_id', $cols)) {
-        $pdo->exec("ALTER TABLE `users` ADD COLUMN `role_id` INT AFTER `role` ");
-    }
     if (!in_array('is_suspended', $cols)) {
         $pdo->exec("ALTER TABLE `users` ADD COLUMN `is_suspended` TINYINT(1) DEFAULT 0 AFTER `is_active` ");
     }
@@ -362,58 +327,11 @@ try {
         $pdo->exec("ALTER TABLE `schedules` ADD COLUMN `period_id` INT AFTER `day_of_week` ");
     }
 
-    // Populate initial roles
-    $roles = [
-        ['Admin', 'admin'],
-        ['นายทะเบียน (Registrar)', 'registrar'],
-        ['ฝ่ายปกครอง (Discipline)', 'discipline'],
-        ['ครู (Teacher)', 'teacher'],
-        ['นักเรียน (Student)', 'student']
-    ];
-    $stmtRole = $pdo->prepare("INSERT IGNORE INTO `roles` (role_name, role_key) VALUES (?, ?)");
-    foreach ($roles as $r) $stmtRole->execute($r);
+    // Role linking removed as roles table is gone
 
-    // Link users to roles
-    $pdo->exec("UPDATE `users` SET `role_id` = (SELECT id FROM roles WHERE role_key = 'admin') WHERE `role` = 'admin'");
-    $pdo->exec("UPDATE `users` SET `role_id` = (SELECT id FROM roles WHERE role_key = 'teacher') WHERE `role` = 'teacher'");
-    $pdo->exec("UPDATE `users` SET `role_id` = (SELECT id FROM roles WHERE role_key = 'student') WHERE `role` = 'student'");
+    // Initial settings removed
 
-    // Initial settings
-    $settingsData = [
-        ['school_name', 'โรงเรียนสาธิตวิทยา', 'ชื่อโรงเรียน'],
-        ['maintenance_mode', '0', 'โหมดปิดปรับปรุง'],
-        ['allow_login', '1', 'อนุญาตให้เข้าสู่ระบบ']
-    ];
-    $stmtSet = $pdo->prepare("INSERT IGNORE INTO `system_settings` (setting_key, setting_value, description) VALUES (?, ?, ?)");
-    foreach ($settingsData as $s) $stmtSet->execute($s);
-
-    // Initial Subject Groups
-    $groupsData = [
-        ['วิทยาศาสตร์และเทคโนโลยี', 'เน้นการทดลองและการเขียนโปรแกรม'],
-        ['คณิตศาสตร์', 'เน้นทักษะการคำนวณและโลจิก'],
-        ['ภาษาไทย', 'ทักษะการสื่อสารภาษาหลัก'],
-        ['ภาษาต่างประเทศ', 'เน้นภาษาอังกฤษและภาษาที่สอง'],
-        ['สังคมศึกษา ศาสนา และวัฒนธรรม', 'ความเข้าใจในสังคมและพลเมือง']
-    ];
-    $stmtGrp = $pdo->prepare("INSERT IGNORE INTO `subject_groups` (name, description) VALUES (?, ?)");
-    foreach ($groupsData as $g) $stmtGrp->execute($g);
-
-    // Initial School Periods (8 periods common in Thai schools)
-    $periodsData = [
-        [1, '08:30:00', '09:20:00'],
-        [2, '09:20:00', '10:10:00'],
-        [3, '10:10:00', '11:00:00'],
-        [4, '11:00:00', '11:50:00'],
-        [5, '12:50:00', '13:40:00'],
-        [6, '13:40:00', '14:30:00'],
-        [7, '14:30:00', '15:20:00'],
-        [8, '15:20:00', '16:10:00']
-    ];
-    $stmtPer = $pdo->prepare("INSERT IGNORE INTO `school_periods` (period_no, start_time, end_time) VALUES (?, ?, ?)");
-    foreach ($periodsData as $p) $stmtPer->execute($p);
-
-    // Initial Academic Year
-    $pdo->exec("INSERT IGNORE INTO `academic_years` (year, term, is_current) VALUES (2567, '1', 1)");
+    // Initial school data removed
 
     echo "<div style='font-family:sans-serif;max-width:600px;margin:50px auto;padding:30px;background:#d4edda;border-radius:12px;text-align:center;'>";
     echo "<h2 style='color:#155724;'>✅ ติดตั้งฐานข้อมูลสำเร็จ! (รวมระบบ Super Admin)</h2>";

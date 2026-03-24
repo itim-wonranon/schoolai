@@ -75,7 +75,7 @@ function requireLogin() {
 
     // 3. Suspension check
     if (isSuspended()) {
-        logActivity('login_blocked', 'Suspended account attempted to access the system');
+        logActivity('login_blocked', 'การเข้าสู่ระบบถูกระงับ (บัญชีถูกระงับการใช้งาน)');
         session_unset();
         session_destroy();
         header("Location: $base_url/login.php?error=account_suspended");
@@ -94,7 +94,7 @@ function requireRole($allowed_roles) {
     
     $user_role = getUserRole();
     if (!in_array($user_role, $allowed_roles)) {
-        logActivity('unauthorized_access', "Attempted access to restricted page with role: $user_role");
+        logActivity('unauthorized_access', "พยายามเข้าถึงหน้าเว็บที่ไม่มีสิทธิ์โดยมีสิทธิ์: $user_role");
         
         http_response_code(403);
         echo '<div style="text-align:center;margin-top:100px;font-family:sans-serif;color:#1E293B;">';
