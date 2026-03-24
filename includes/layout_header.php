@@ -17,13 +17,10 @@ $base_url = '/schoolai';
 <body>
     <!-- Top Navbar -->
     <nav class="top-navbar">
-        <div class="navbar-left">
-            <button class="btn sidebar-toggle-btn" id="sidebarToggleBtn">
-                <i class="bi bi-list"></i>
-            </button>
-            <span class="navbar-brand-text">
+        <div class="navbar-left ps-4">
+            <a href="<?php echo $base_url; ?>/index.php" class="navbar-brand-text text-decoration-none" style="color: inherit;">
                 <i class="bi bi-mortarboard-fill"></i> โรงเรียนสาธิตวิทยา
-            </span>
+            </a>
         </div>
         <div class="navbar-right">
             <?php if (isImpersonating()): ?>

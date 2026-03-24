@@ -2,12 +2,6 @@
 $role = getUserRole();
 ?>
 <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <div class="sidebar-logo">
-            <i class="bi bi-mortarboard-fill"></i>
-            <span class="sidebar-logo-text">SchoolAI</span>
-        </div>
-    </div>
     <nav class="sidebar-nav">
         <ul class="sidebar-menu">
             <!-- Dashboard (Admin Only) -->
@@ -18,7 +12,8 @@ $role = getUserRole();
                     <span>แดชบอร์ด</span>
                 </a>
             </li>
-            <?php endif; ?>
+            <?php
+endif; ?>
 
             <!-- Super Admin Section -->
             <?php if ($role === 'admin'): ?>
@@ -39,12 +34,13 @@ $role = getUserRole();
             </li>
 
             <div style="margin-bottom: 20px;"></div>
-            <?php endif; ?>
+            <?php
+endif; ?>
             
             <?php if ($role === 'admin'): ?>
             <li class="menu-divider" style="padding:15px 15px 5px;font-size:0.75rem;color:#64748B;font-weight:bold;text-transform:uppercase;">จัดการข้อมูลโรงเรียน</li>
             
-            <li class="menu-item has-submenu <?php echo in_array($current_page, ['teachers','students','subjects','classes','classrooms']) ? 'open' : ''; ?>">
+            <li class="menu-item has-submenu <?php echo in_array($current_page, ['teachers', 'students', 'subjects', 'classes', 'classrooms']) ? 'open' : ''; ?>">
                 <a href="#" class="submenu-toggle">
                     <i class="bi bi-database-fill"></i>
                     <span>จัดการข้อมูลตั้งต้น</span>
@@ -89,7 +85,8 @@ $role = getUserRole();
                     <span>เช็คชื่อนักเรียน</span>
                 </a>
             </li>
-            <?php endif; ?>
+            <?php
+endif; ?>
 
             <?php if ($role === 'teacher'): ?>
             <!-- Teacher menus -->
@@ -111,7 +108,8 @@ $role = getUserRole();
                     <span>บันทึกผลการเรียน</span>
                 </a>
             </li>
-            <?php endif; ?>
+            <?php
+endif; ?>
 
             <?php if ($role === 'student'): ?>
             <!-- Student menus -->
@@ -127,7 +125,8 @@ $role = getUserRole();
                     <span>ผลการเรียนของฉัน</span>
                 </a>
             </li>
-            <?php endif; ?>
+            <?php
+endif; ?>
         </ul>
     </nav>
 </aside>

@@ -97,6 +97,8 @@ try {
         `period_no` INT NOT NULL,
         `start_time` TIME NOT NULL,
         `end_time` TIME NOT NULL,
+        `level` ENUM('middle', 'high') NOT NULL,
+        `is_lunch` TINYINT(1) DEFAULT 0,
         `is_active` TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB");
 
@@ -106,7 +108,7 @@ try {
         `teacher_id` INT NOT NULL,
         `class_id` INT NOT NULL,
         `classroom_id` INT NOT NULL,
-        `day_of_week` ENUM('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday') NOT NULL,
+        `day_of_week` ENUM('Monday','Tuesday','Wednesday','Thursday','Friday') NOT NULL,
         `period_id` INT DEFAULT NULL,
         `start_time` TIME NOT NULL,
         `end_time` TIME NOT NULL,
@@ -254,6 +256,31 @@ try {
     ];
     $stmtGrade = $pdo->prepare("INSERT IGNORE INTO `grades` (`student_id`,`subject_id`,`score`,`grade`) VALUES (?,?,?,?)");
     foreach ($gradeData as $g) $stmtGrade->execute($g);
+
+    // Initial School Periods (Middle & High)
+    $periodsData = [
+        // Middle School (ม.1 - ม.3)
+        [1, '08:30', '09:30', 'middle', 0],
+        [2, '09:30', '10:30', 'middle', 0],
+        [3, '10:30', '11:30', 'middle', 0],
+        [0, '11:30', '12:30', 'middle', 1], // Lunch
+        [4, '12:30', '13:30', 'middle', 0],
+        [5, '13:30', '14:30', 'middle', 0],
+        [6, '14:30', '15:30', 'middle', 0],
+        // High School (ม.4 - ม.6)
+        [1, '08:30', '09:30', 'high', 0],
+        [2, '09:30', '10:30', 'high', 0],
+        [3, '10:30', '11:30', 'high', 0],
+        [4, '11:30', '12:30', 'high', 0],
+        [0, '12:30', '13:30', 'high', 1], // Lunch
+        [5, '13:30', '14:30', 'high', 0],
+        [6, '14:30', '15:30', 'high', 0]
+    ];
+    $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+    $pdo->exec("TRUNCATE TABLE `school_periods` "); 
+    $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+    $stmtP = $pdo->prepare("INSERT INTO `school_periods` (period_no, start_time, end_time, level, is_lunch) VALUES (?, ?, ?, ?, ?)");
+    foreach ($periodsData as $p) $stmtP->execute($p);
 
     // Sample attendance
     $attendData = [

@@ -13,18 +13,51 @@ try {
     if ($method === 'GET') {
         // Fetch school periods
         if (isset($_GET['periods'])) {
-            $stmt = $pdo->query("SELECT * FROM school_periods WHERE is_active = 1 ORDER BY period_no");
+            $level = $_GET['level'] ?? '';
+            $class_id = $_GET['class_id'] ?? '';
+            
+            // Auto-detect level if not provided
+            if (!$level && !$class_id) {
+                if ($role === 'student') {
+                    $stmtS = $pdo->prepare("SELECT c.class_name FROM students s JOIN classes c ON s.class_id = c.id WHERE s.id = ?");
+                    $stmtS->execute([$refId]);
+                    $className = $stmtS->fetchColumn();
+                    if ($className) $level = (preg_match('/ม\.[1-3]/u', $className)) ? 'middle' : 'high';
+                } elseif ($role === 'teacher') {
+                    // Teachers might teach both, but for "periods" we might just return both or a default
+                    // For now, let's keep it empty for teachers unless they filter by class
+                }
+            }
+            
+            if (!$level && $class_id) {
+                $stmtCls = $pdo->prepare("SELECT class_name FROM classes WHERE id = ?");
+                $stmtCls->execute([$class_id]);
+                $className = $stmtCls->fetchColumn();
+                if ($className) {
+                    $level = (preg_match('/ม\.[1-3]/u', $className)) ? 'middle' : 'high';
+                }
+            }
+            
+            $sql = "SELECT * FROM school_periods WHERE is_active = 1";
+            $params = [];
+            if ($level) {
+                $sql .= " AND level = ?";
+                $params[] = $level;
+            }
+            $sql .= " ORDER BY level, start_time";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
             echo json_encode($stmt->fetchAll());
             exit;
         }
 
         // Personal schedule for teacher/student
         if (isset($_GET['my'])) {
-            // ... (keep existing logic but join period if possible)
             $where = ($role === 'teacher') ? "s.teacher_id = ?" : "s.class_id = (SELECT class_id FROM students WHERE id = ?)";
             $stmt = $pdo->prepare("SELECT s.*, sub.subject_name, sub.subject_code,
                 CONCAT(t.first_name, ' ', t.last_name) AS teacher_name,
-                c.class_name, cr.room_name, p.period_no
+                c.class_name, cr.room_name, p.period_no, p.is_lunch
                 FROM schedules s
                 JOIN subjects sub ON s.subject_id = sub.id
                 JOIN teachers t ON s.teacher_id = t.id
@@ -32,7 +65,7 @@ try {
                 JOIN classrooms cr ON s.classroom_id = cr.id
                 LEFT JOIN school_periods p ON s.period_id = p.id
                 WHERE $where
-                ORDER BY FIELD(s.day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'), s.start_time");
+                ORDER BY FIELD(s.day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday'), s.start_time");
             $stmt->execute([$refId]);
             echo json_encode($stmt->fetchAll());
             exit;
@@ -51,7 +84,7 @@ try {
 
             $stmt = $pdo->prepare("SELECT s.*, sub.subject_name, sub.subject_code,
                 CONCAT(t.first_name, ' ', t.last_name) AS teacher_name,
-                c.class_name, cr.room_name, p.period_no
+                c.class_name, cr.room_name, p.period_no, p.is_lunch
                 FROM schedules s
                 JOIN subjects sub ON s.subject_id = sub.id
                 JOIN teachers t ON s.teacher_id = t.id
@@ -59,7 +92,7 @@ try {
                 JOIN classrooms cr ON s.classroom_id = cr.id
                 LEFT JOIN school_periods p ON s.period_id = p.id
                 WHERE $where
-                ORDER BY FIELD(s.day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'), s.start_time");
+                ORDER BY FIELD(s.day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday'), s.start_time");
             $stmt->execute($params);
             echo json_encode($stmt->fetchAll());
         }
