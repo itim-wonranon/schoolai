@@ -8,6 +8,7 @@ $pdo = getDB();
 
 try {
     $result = [];
+    $result['timestamp'] = date('Y-m-d H:i:s');
 
     // Stats counts
     $result['stats'] = [
@@ -17,7 +18,7 @@ try {
         'classrooms' => $pdo->query("SELECT COUNT(*) FROM classrooms")->fetchColumn(),
     ];
 
-    // Attendance summary
+    // Attendance summary (Total aggregated)
     $attStmt = $pdo->query("SELECT
         SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) AS present,
         SUM(CASE WHEN status = 'absent'  THEN 1 ELSE 0 END) AS absent,

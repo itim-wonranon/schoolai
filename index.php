@@ -14,8 +14,13 @@ require_once __DIR__ . '/includes/layout_header.php';
 ?>
 
 <!-- Admin Dashboard Stats -->
-<div class="page-header">
+<div class="page-header d-flex justify-content-between align-items-center">
     <h1><i class="bi bi-speedometer2"></i> แดชบอร์ดผู้บริหาร</h1>
+    <div class="last-updated-badge" id="lastUpdatedContainer" style="display: none;">
+        <span class="badge bg-light text-dark border">
+            <i class="bi bi-clock-history me-1"></i> อัปเดตล่าสุด: <span id="lastUpdatedTime">-</span>
+        </span>
+    </div>
 </div>
 
 <div class="row g-4 mb-4" id="dashboardStats">

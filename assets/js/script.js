@@ -652,70 +652,121 @@ $(document).ready(function () {
 
     // ========== DASHBOARD MODULE ==========
     window.loadDashboard = function () {
-        loadData('dashboard.php', function (data) {
-            if (data.stats) {
-                $('#statTeachers').text(data.stats.teachers);
-                $('#statStudents').text(data.stats.students);
-                $('#statSubjects').text(data.stats.subjects);
-                $('#statClassrooms').text(data.stats.classrooms);
-            }
+        $.ajax({
+            url: BASE_URL + '/api/dashboard.php',
+            method: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                if (data.stats) {
+                    // Animate numbers
+                    animateNumber('#statTeachers', data.stats.teachers);
+                    animateNumber('#statStudents', data.stats.students);
+                    animateNumber('#statSubjects', data.stats.subjects);
+                    animateNumber('#statClassrooms', data.stats.classrooms);
+                }
 
-            // Attendance Chart
-            if (data.attendance && $('#attendanceChart').length) {
-                const ctx = document.getElementById('attendanceChart').getContext('2d');
-                if (window.attendanceChartInstance) window.attendanceChartInstance.destroy();
-                window.attendanceChartInstance = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['มาเรียน', 'ขาด', 'สาย', 'ลา'],
-                        datasets: [{
-                            data: [data.attendance.present, data.attendance.absent, data.attendance.late, data.attendance.leave],
-                            backgroundColor: ['#10B981', '#EF4444', '#F59E0B', '#3B82F6'],
-                            borderWidth: 2,
-                            borderColor: '#fff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'bottom', labels: { padding: 16, font: { family: "'Sarabun', sans-serif" } } }
-                        }
-                    }
-                });
-            }
+                if (data.timestamp) {
+                    $('#lastUpdatedTime').text(data.timestamp.split(' ')[1]); // Only show time
+                    $('#lastUpdatedContainer').fadeIn();
+                }
 
-            // Grade Distribution Chart
-            if (data.grades && $('#gradeChart').length) {
-                const ctx2 = document.getElementById('gradeChart').getContext('2d');
-                if (window.gradeChartInstance) window.gradeChartInstance.destroy();
-                window.gradeChartInstance = new Chart(ctx2, {
-                    type: 'bar',
-                    data: {
-                        labels: ['เกรด 4', 'เกรด 3', 'เกรด 2', 'เกรด 1', 'เกรด 0'],
-                        datasets: [{
-                            label: 'จำนวนนักเรียน',
-                            data: [data.grades.grade4, data.grades.grade3, data.grades.grade2, data.grades.grade1, data.grades.grade0],
-                            backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#F97316', '#EF4444'],
-                            borderRadius: 8,
-                            borderSkipped: false
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: "'Sarabun', sans-serif" } } },
-                            x: { ticks: { font: { family: "'Sarabun', sans-serif" } } }
-                        },
-                        plugins: {
-                            legend: { display: false }
-                        }
+                // Attendance Chart
+                if (data.attendance && $('#attendanceChart').length) {
+                    const ctx = document.getElementById('attendanceChart').getContext('2d');
+                    if (window.attendanceChartInstance) {
+                        window.attendanceChartInstance.data.datasets[0].data = [
+                            data.attendance.present, 
+                            data.attendance.absent, 
+                            data.attendance.late, 
+                            data.attendance.leave
+                        ];
+                        window.attendanceChartInstance.update();
+                    } else {
+                        window.attendanceChartInstance = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['มาเรียน', 'ขาด', 'สาย', 'ลา'],
+                                datasets: [{
+                                    data: [data.attendance.present, data.attendance.absent, data.attendance.late, data.attendance.leave],
+                                    backgroundColor: ['#10B981', '#EF4444', '#F59E0B', '#3B82F6'],
+                                    borderWidth: 2,
+                                    borderColor: '#fff'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { position: 'bottom', labels: { padding: 16, font: { family: "'Sarabun', sans-serif" } } }
+                                }
+                            }
+                        });
                     }
-                });
+                }
+
+                // Grade Distribution Chart
+                if (data.grades && $('#gradeChart').length) {
+                    const ctx2 = document.getElementById('gradeChart').getContext('2d');
+                    if (window.gradeChartInstance) {
+                        window.gradeChartInstance.data.datasets[0].data = [
+                            data.grades.grade4, 
+                            data.grades.grade3, 
+                            data.grades.grade2, 
+                            data.grades.grade1, 
+                            data.grades.grade0
+                        ];
+                        window.gradeChartInstance.update();
+                    } else {
+                        window.gradeChartInstance = new Chart(ctx2, {
+                            type: 'bar',
+                            data: {
+                                labels: ['เกรด 4', 'เกรด 3', 'เกรด 2', 'เกรด 1', 'เกรด 0'],
+                                datasets: [{
+                                    label: 'จำนวนนักเรียน',
+                                    data: [data.grades.grade4, data.grades.grade3, data.grades.grade2, data.grades.grade1, data.grades.grade0],
+                                    backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#F97316', '#EF4444'],
+                                    borderRadius: 8,
+                                    borderSkipped: false
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: "'Sarabun', sans-serif" } } },
+                                    x: { ticks: { font: { family: "'Sarabun', sans-serif" } } }
+                                },
+                                plugins: {
+                                    legend: { display: false }
+                                }
+                            }
+                        });
+                    }
+                }
+            },
+            error: function (xhr) {
+                console.error('Dashboard load error:', xhr.responseText);
             }
         });
     };
+
+    // Helper to animate numbers
+    function animateNumber(selector, target) {
+        const el = $(selector);
+        const current = parseInt(el.text()) || 0;
+        if (current === target) return;
+        
+        $({ count: current }).animate({ count: target }, {
+            duration: 1000,
+            easing: 'swing',
+            step: function () {
+                el.text(Math.ceil(this.count));
+            },
+            complete: function() {
+                el.text(target);
+            }
+        });
+    }
 
     // ========== INITIALIZATION (AUTO-LOAD) ==========
     if ($('#teachersTable').length) loadTeachers();
@@ -748,7 +799,12 @@ $(document).ready(function () {
     }
 
     if ($('#attendanceFilterSchedule').length) loadAttendanceSchedules();
-    if ($('#dashboardStats').length) loadDashboard();
+    
+    if ($('#dashboardStats').length) {
+        loadDashboard();
+        // Start real-time polling every 5 seconds
+        setInterval(loadDashboard, 5000);
+    }
 
     if ($('#myScheduleTable').length) {
         loadData('schedules.php?my=1', function (data) {
