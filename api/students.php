@@ -11,11 +11,11 @@ try {
     switch ($method) {
         case 'GET':
             if (isset($_GET['id'])) {
-                $stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
+                $stmt = $pdo->prepare("SELECT s.*, c.class_name, c.study_track FROM students s LEFT JOIN classes c ON s.class_id = c.id WHERE s.id = ?");
                 $stmt->execute([$_GET['id']]);
                 echo json_encode($stmt->fetch());
             } else {
-                $stmt = $pdo->query("SELECT s.*, c.class_name FROM students s LEFT JOIN classes c ON s.class_id = c.id ORDER BY s.id");
+                $stmt = $pdo->query("SELECT s.*, c.class_name, c.study_track FROM students s LEFT JOIN classes c ON s.class_id = c.id ORDER BY s.id");
                 echo json_encode($stmt->fetchAll());
             }
             break;

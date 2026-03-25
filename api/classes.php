@@ -28,15 +28,15 @@ try {
 
         case 'POST':
             $data = json_decode(file_get_contents('php://input'), true);
-            $stmt = $pdo->prepare("INSERT INTO classes (class_code, class_name, homeroom_teacher_id) VALUES (?, ?, ?)");
-            $stmt->execute([$data['class_code'], $data['class_name'], $data['homeroom_teacher_id'] ?: null]);
+            $stmt = $pdo->prepare("INSERT INTO classes (class_code, class_name, study_track, homeroom_teacher_id) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$data['class_code'], $data['class_name'], $data['study_track'] ?: null, $data['homeroom_teacher_id'] ?: null]);
             echo json_encode(['success' => true, 'message' => 'เพิ่มข้อมูลชั้นเรียนสำเร็จ']);
             break;
 
         case 'PUT':
             $data = json_decode(file_get_contents('php://input'), true);
-            $stmt = $pdo->prepare("UPDATE classes SET class_code=?, class_name=?, homeroom_teacher_id=? WHERE id=?");
-            $stmt->execute([$data['class_code'], $data['class_name'], $data['homeroom_teacher_id'] ?: null, $data['id']]);
+            $stmt = $pdo->prepare("UPDATE classes SET class_code=?, class_name=?, study_track=?, homeroom_teacher_id=? WHERE id=?");
+            $stmt->execute([$data['class_code'], $data['class_name'], $data['study_track'] ?: null, $data['homeroom_teacher_id'] ?: null, $data['id']]);
             echo json_encode(['success' => true, 'message' => 'แก้ไขข้อมูลชั้นเรียนสำเร็จ']);
             break;
 

@@ -212,12 +212,14 @@ $(document).ready(function () {
                 rows = '<tr><td colspan="7" class="text-center py-4 text-muted">ไม่มีข้อมูล</td></tr>';
             }
             data.forEach(function (s, i) {
+                const trackText = s.study_track ? s.study_track : '-';
                 rows += `<tr class="animate-fade-in">
                     <td>${i + 1}</td>
                     <td><strong>${s.student_code}</strong></td>
                     <td>${s.first_name} ${s.last_name}</td>
                     <td>${s.birthdate || '-'}</td>
                     <td>${s.class_name || '-'}</td>
+                    <td>${trackText}</td>
                     <td>
                         <button class="btn-icon btn-edit" onclick="editStudent(${s.id})" title="แก้ไข"><i class="bi bi-pencil-square"></i></button>
                         <button class="btn-icon btn-delete" onclick="removeStudent(${s.id})" title="ลบ"><i class="bi bi-trash3"></i></button>
@@ -347,6 +349,7 @@ $(document).ready(function () {
                     <td>${i + 1}</td>
                     <td><strong>${c.class_code}</strong></td>
                     <td>${c.class_name}</td>
+                    <td>${c.study_track || '<span class="text-muted small">-</span>'}</td>
                     <td>${c.homeroom_teacher_name || '<span class="text-muted small">ยังไม่กำหนด</span>'}</td>
                     <td>
                         <button class="btn-icon btn-edit" onclick="editClass(${c.id})" title="แก้ไข"><i class="bi bi-pencil-square"></i></button>
@@ -376,6 +379,7 @@ $(document).ready(function () {
                     $('#class_id').val(c.id);
                     $('#class_code').val(c.class_code);
                     $('#class_name').val(c.class_name);
+                    $('#study_track').val(c.study_track || '');
                     $('#homeroom_teacher_id').val(c.homeroom_teacher_id || '');
                     new bootstrap.Modal($('#classModal')).show();
                 });
@@ -392,6 +396,7 @@ $(document).ready(function () {
             id: $('#class_id').val(),
             class_code: $('#class_code').val(),
             class_name: $('#class_name').val(),
+            study_track: $('#study_track').val(),
             homeroom_teacher_id: $('#homeroom_teacher_id').val()
         };
         const method = data.id ? 'PUT' : 'POST';

@@ -23,11 +23,12 @@ require_once __DIR__ . '/includes/layout_header.php';
                         <th>ชื่อ-นามสกุล</th>
                         <th>วันเกิด</th>
                         <th>ชั้นเรียน</th>
+                        <th>สายการเรียน</th>
                         <th width="100">จัดการ</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td colspan="6" class="text-center py-4"><div class="loading-spinner"></div></td></tr>
+                    <tr><td colspan="7" class="text-center py-4"><div class="loading-spinner"></div></td></tr>
                 </tbody>
             </table>
         </div>
