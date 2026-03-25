@@ -88,12 +88,18 @@ require_once __DIR__ . '/includes/layout_header.php';
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">เวลาเริ่ม *</label>
-                            <input type="time" class="form-control" id="schedule_start_time" required>
+                            <label class="form-label">คาบเรียน *</label>
+                            <select class="form-select" id="schedule_period_id" required>
+                                <option value="">-- เลือกคาบ --</option>
+                            </select>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">เวลาสิ้นสุด *</label>
-                            <input type="time" class="form-control" id="schedule_end_time" required>
+                            <label class="form-label">เวลาเรียน</label>
+                            <div class="input-group">
+                                <input type="time" class="form-control bg-light" id="schedule_start_time" readonly>
+                                <span class="input-group-text">-</span>
+                                <input type="time" class="form-control bg-light" id="schedule_end_time" readonly>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -103,6 +109,26 @@ require_once __DIR__ . '/includes/layout_header.php';
                 <button type="button" class="btn-primary-custom" onclick="saveSchedule()">
                     <i class="bi bi-check-circle"></i> บันทึก
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteScheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-4">
+                <div class="mb-3">
+                    <i class="bi bi-exclamation-octagon text-danger" style="font-size: 4rem;"></i>
+                </div>
+                <h4 class="fw-bold mb-2">ยืนยันการลบ?</h4>
+                <p class="text-muted mb-4">คุณแน่ใจหรือไม่ว่าต้องการลบคาบเรียนนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้</p>
+                <input type="hidden" id="delete_schedule_id">
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-danger px-4" onclick="confirmDeleteSchedule()">ยืนยันการลบ</button>
+                </div>
             </div>
         </div>
     </div>

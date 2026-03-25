@@ -24,8 +24,9 @@ try {
                     $className = $stmtS->fetchColumn();
                     if ($className) $level = (preg_match('/ม\.[1-3]/u', $className)) ? 'middle' : 'high';
                 } elseif ($role === 'teacher') {
-                    // Teachers might teach both, but for "periods" we might just return both or a default
-                    // For now, let's keep it empty for teachers unless they filter by class
+                    $stmtT = $pdo->prepare("SELECT teaching_level FROM teachers WHERE id = ?");
+                    $stmtT->execute([$refId]);
+                    $level = $stmtT->fetchColumn() ?: 'middle';
                 }
             }
             
@@ -101,26 +102,30 @@ try {
         $data = json_decode(file_get_contents('php://input'), true);
         $id = $data['id'] ?? 0;
         
-        // Conflict Detection
+        // Conflict Detection (Robust overlap check)
+        $sTime = $data['start_time'];
+        $eTime = $data['end_time'];
+        $day = $data['day_of_week'];
+
         // 1. Teacher conflict
-        $stmtConflict = $pdo->prepare("SELECT COUNT(*) FROM schedules WHERE teacher_id = ? AND day_of_week = ? AND ((start_time < ? AND end_time > ?) OR (start_time < ? AND end_time > ?) OR (start_time >= ? AND end_time <= ?)) AND id != ?");
-        $stmtConflict->execute([$data['teacher_id'], $data['day_of_week'], $data['end_time'], $data['start_time'], $data['end_time'], $data['end_time'], $data['start_time'], $data['end_time'], $id]);
+        $stmtConflict = $pdo->prepare("SELECT COUNT(*) FROM schedules WHERE teacher_id = ? AND day_of_week = ? AND id != ? AND NOT (end_time <= ? OR start_time >= ?)");
+        $stmtConflict->execute([$data['teacher_id'], $day, $id, $sTime, $eTime]);
         if ($stmtConflict->fetchColumn() > 0) {
-            echo json_encode(['success' => false, 'message' => 'ครูผู้สอนท่านนี้ไม่ว่างในวันและเวลาดังกล่าว']);
+            echo json_encode(['success' => false, 'message' => 'ครูผู้สอนท่านนี้มีตารางสอนอื่นทับซ้อนในช่วงเวลาดังกล่าว']);
             exit;
         }
 
         // 2. Classroom conflict
-        $stmtRoomConflict = $pdo->prepare("SELECT COUNT(*) FROM schedules WHERE classroom_id = ? AND day_of_week = ? AND ((start_time < ? AND end_time > ?) OR (start_time < ? AND end_time > ?) OR (start_time >= ? AND end_time <= ?)) AND id != ?");
-        $stmtRoomConflict->execute([$data['classroom_id'], $data['day_of_week'], $data['end_time'], $data['start_time'], $data['end_time'], $data['end_time'], $data['start_time'], $data['end_time'], $id]);
+        $stmtRoomConflict = $pdo->prepare("SELECT COUNT(*) FROM schedules WHERE classroom_id = ? AND day_of_week = ? AND id != ? AND NOT (end_time <= ? OR start_time >= ?)");
+        $stmtRoomConflict->execute([$data['classroom_id'], $day, $id, $sTime, $eTime]);
         if ($stmtRoomConflict->fetchColumn() > 0) {
             echo json_encode(['success' => false, 'message' => 'ห้องเรียนนี้ไม่ว่างในวันและเวลาดังกล่าว']);
             exit;
         }
 
-        // 3. Class (Student Group) conflict
-        $stmtClassConflict = $pdo->prepare("SELECT COUNT(*) FROM schedules WHERE class_id = ? AND day_of_week = ? AND ((start_time < ? AND end_time > ?) OR (start_time < ? AND end_time > ?) OR (start_time >= ? AND end_time <= ?)) AND id != ?");
-        $stmtClassConflict->execute([$data['class_id'], $data['day_of_week'], $data['end_time'], $data['start_time'], $data['end_time'], $data['end_time'], $data['start_time'], $data['end_time'], $id]);
+        // 3. Class conflict
+        $stmtClassConflict = $pdo->prepare("SELECT COUNT(*) FROM schedules WHERE class_id = ? AND day_of_week = ? AND id != ? AND NOT (end_time <= ? OR start_time >= ?)");
+        $stmtClassConflict->execute([$data['class_id'], $day, $id, $sTime, $eTime]);
         if ($stmtClassConflict->fetchColumn() > 0) {
             echo json_encode(['success' => false, 'message' => 'ชั้นเรียนนี้มีตารางเรียนอื่นทับซ้อนในช่วงเวลาดังกล่าว']);
             exit;
@@ -128,12 +133,12 @@ try {
 
         if ($method === 'POST') {
             $stmt = $pdo->prepare("INSERT INTO schedules (subject_id, teacher_id, class_id, classroom_id, day_of_week, period_id, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$data['subject_id'], $data['teacher_id'], $data['class_id'], $data['classroom_id'], $data['day_of_week'], $data['period_id'] ?? null, $data['start_time'], $data['end_time']]);
-            logActivity('schedule_create', "เพิ่มตารางเรียนสำหรับ วัน" . $data['day_of_week']);
+            $stmt->execute([$data['subject_id'], $data['teacher_id'], $data['class_id'], $data['classroom_id'], $day, $data['period_id'] ?? null, $sTime, $eTime]);
+            logActivity('schedule_create', "เพิ่มตารางเรียนสำหรับ วัน" . $day);
             echo json_encode(['success' => true, 'message' => 'เพิ่มตารางเรียนสำเร็จ']);
         } else {
             $stmt = $pdo->prepare("UPDATE schedules SET subject_id=?, teacher_id=?, class_id=?, classroom_id=?, day_of_week=?, period_id=?, start_time=?, end_time=? WHERE id=?");
-            $stmt->execute([$data['subject_id'], $data['teacher_id'], $data['class_id'], $data['classroom_id'], $data['day_of_week'], $data['period_id'] ?? null, $data['start_time'], $data['end_time'], $id]);
+            $stmt->execute([$data['subject_id'], $data['teacher_id'], $data['class_id'], $data['classroom_id'], $day, $data['period_id'] ?? null, $sTime, $eTime, $id]);
             logActivity('schedule_update', "อัปเดตตารางเรียน ID: $id");
             echo json_encode(['success' => true, 'message' => 'แก้ไขตารางเรียนสำเร็จ']);
         }

@@ -960,3 +960,37 @@ a { text-decoration: none; color: inherit; transition: var(--transition); }
     transform: translateY(-5px);
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
+/* ---------- Teacher Module Enhancements ---------- */
+.profile-upload-preview {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-upload-preview img {
+    border: 3px solid var(--primary);
+    box-shadow: var(--shadow-md);
+}
+
+.badge.bg-info.text-dark {
+    background-color: #E0F2FE !important;
+    color: #0369A1 !important;
+    border: 1px solid #BAE6FD;
+}
+
+.badge.bg-warning.text-dark {
+    background-color: #FEF3C7 !important;
+    color: #92400E !important;
+    border: 1px solid #FDE68A;
+}
+
+.grade-badge.shadow-sm {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+}
+
+.data-table .align-middle td {
+    vertical-align: middle !important;
+}
+
+.extra-small {
+    font-size: 10px;
+}

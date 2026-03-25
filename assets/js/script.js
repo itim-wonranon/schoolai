@@ -92,18 +92,25 @@ $(document).ready(function () {
         loadData('teachers.php', function (data) {
             let rows = '';
             if (data.length === 0) {
-                rows = '<tr><td colspan="6" class="text-center py-4 text-muted">ไม่มีข้อมูล</td></tr>';
+                rows = '<tr><td colspan="8" class="text-center py-4 text-muted">ไม่มีข้อมูล</td></tr>';
             }
             data.forEach(function (t, i) {
-                rows += `<tr class="animate-fade-in">
+                const profileImg = t.profile_image ? t.profile_image : 'assets/images/default-avatar.png';
+                const levelBadge = t.teaching_level === 'high' ? 
+                    '<span class="badge bg-warning text-dark"><i class="bi bi-mortarboard"></i> มัธยมปลาย</span>' : 
+                    '<span class="badge bg-info text-dark"><i class="bi bi-book"></i> มัธยมต้น</span>';
+                
+                rows += `<tr class="animate-fade-in align-middle">
                     <td>${i + 1}</td>
+                    <td><img src="${profileImg}" class="rounded-circle shadow-sm" style="width: 40px; height: 40px; object-fit: cover;"></td>
                     <td><strong>${t.teacher_code}</strong></td>
                     <td>${t.first_name} ${t.last_name}</td>
-                    <td>${t.phone || '-'}</td>
+                    <td>${levelBadge}</td>
+                    <td>${t.homeroom_class_name || '<span class="text-muted small">-</span>'}</td>
                     <td>${t.department || '-'}</td>
                     <td>
                         <button class="btn-icon btn-edit" onclick="editTeacher(${t.id})" title="แก้ไข"><i class="bi bi-pencil-square"></i></button>
-                        <button class="btn-icon btn-delete" onclick="removeTeacher(${t.id})" title="ลบ"><i class="bi bi-trash3"></i></button>
+                        <button class="btn-icon btn-delete" onclick="removeTeacher(${t.id})" title="ลบทิ้ง"><i class="bi bi-trash3"></i></button>
                     </td>
                 </tr>`;
             });
@@ -111,43 +118,90 @@ $(document).ready(function () {
         });
     };
 
+    window.previewImage = function (input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $('#profilePreview').attr('src', e.target.result);
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    };
+
     window.openTeacherModal = function (id = null) {
         $('#teacherForm')[0].reset();
         $('#teacher_id').val('');
+        $('#teacher_action').val('POST');
+        $('#profilePreview').attr('src', 'assets/images/default-avatar.png');
         $('#teacherModalLabel').text(id ? 'แก้ไขข้อมูลครู' : 'เพิ่มข้อมูลครู');
-        if (id) {
-            loadData('teachers.php?id=' + id, function (t) {
-                $('#teacher_id').val(t.id);
-                $('#teacher_code').val(t.teacher_code);
-                $('#teacher_first_name').val(t.first_name);
-                $('#teacher_last_name').val(t.last_name);
-                $('#teacher_phone').val(t.phone);
-                $('#teacher_department').val(t.department);
-            });
-        }
+        
+        // Load classes for homeroom select
+        loadData('classes.php', function (classes) {
+            let opts = '<option value="">-- ไม่ได้เป็นครูประจำชั้น --</option>';
+            classes.forEach(c => opts += `<option value="${c.id}">${c.class_name}</option>`);
+            $('#teacher_homeroom_class_id').html(opts);
+            
+            if (id) {
+                loadData('teachers.php?id=' + id, function (t) {
+                    $('#teacher_id').val(t.id);
+                    $('#teacher_action').val('UPDATE');
+                    $('#teacher_code').val(t.teacher_code);
+                    $('#teacher_first_name').val(t.first_name);
+                    $('#teacher_last_name').val(t.last_name);
+                    $('#teacher_phone').val(t.phone);
+                    $('#teacher_department').val(t.department);
+                    $('#teacher_teaching_level').val(t.teaching_level);
+                    $('#teacher_homeroom_class_id').val(t.homeroom_class_id);
+                    if (t.profile_image) $('#profilePreview').attr('src', t.profile_image);
+                });
+            }
+        });
+        
         new bootstrap.Modal($('#teacherModal')).show();
     };
 
     window.editTeacher = function (id) { openTeacherModal(id); };
 
     window.saveTeacher = function () {
-        const data = {
-            id: $('#teacher_id').val(),
-            teacher_code: $('#teacher_code').val(),
-            first_name: $('#teacher_first_name').val(),
-            last_name: $('#teacher_last_name').val(),
-            phone: $('#teacher_phone').val(),
-            department: $('#teacher_department').val()
-        };
-        const method = data.id ? 'PUT' : 'POST';
-        saveData('teachers.php', data, method, function () {
-            bootstrap.Modal.getInstance($('#teacherModal')).hide();
-            loadTeachers();
+        const form = document.getElementById('teacherForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const formData = new FormData(form);
+        const actionText = $('#teacher_id').val() ? 'แก้ไข' : 'เพิ่ม';
+
+        $.ajax({
+            url: 'api/teachers.php',
+            method: 'POST', // Always POST for file uploads
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                if (res.success) {
+                    showToast(res.message, 'success');
+                    bootstrap.Modal.getInstance($('#teacherModal')).hide();
+                    loadTeachers();
+                } else {
+                    showToast(res.message, 'error');
+                }
+            },
+            error: function () {
+                showToast('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
+            }
         });
     };
 
     window.removeTeacher = function (id) {
-        deleteData('teachers.php', id, loadTeachers);
+        const modal = new bootstrap.Modal($('#deleteConfirmModal'));
+        $('#btnConfirmDelete').off('click').on('click', function() {
+            deleteData('teachers.php', id, function() {
+                modal.hide();
+                loadTeachers();
+            });
+        });
+        modal.show();
     };
 
     // ========== STUDENT MODULE ==========
@@ -398,6 +452,7 @@ $(document).ready(function () {
             data.forEach(d => opts += `<option value="${d.id}">${d.subject_code} - ${d.subject_name}</option>`);
             $('#schedule_subject_id').html(opts);
         });
+        // Initial load of all teachers (will be filtered on class change)
         loadData('teachers.php', function (data) {
             let opts = '<option value="">-- เลือกครู --</option>';
             data.forEach(d => opts += `<option value="${d.id}">${d.teacher_code} - ${d.first_name} ${d.last_name}</option>`);
@@ -405,7 +460,7 @@ $(document).ready(function () {
         });
         loadData('classes.php', function (data) {
             let opts = '<option value="">-- เลือกชั้นเรียน --</option>';
-            data.forEach(d => opts += `<option value="${d.id}">${d.class_name}</option>`);
+            data.forEach(d => opts += `<option value="${d.id}" data-name="${d.class_name}">${d.class_name}</option>`);
             $('#schedule_class_id').html(opts);
         });
         loadData('classrooms.php', function (data) {
@@ -414,6 +469,42 @@ $(document).ready(function () {
             $('#schedule_classroom_id').html(opts);
         });
     };
+
+    // Global variables for schedule modal state
+    let schedulePeriods = [];
+    
+    $(document).on('change', '#schedule_class_id', function() {
+        const classId = $(this).val();
+        const className = $(this).find(':selected').data('name') || '';
+        if (!classId) return;
+
+        const level = (className.includes('ม.1') || className.includes('ม.2') || className.includes('ม.3')) ? 'middle' : 'high';
+        
+        // Filter Teachers by Level
+        loadData('teachers.php', function(teachers) {
+            const filtered = teachers.filter(t => t.teaching_level === level);
+            let opts = '<option value="">-- เลือกครู --</option>';
+            filtered.forEach(d => opts += `<option value="${d.id}">${d.teacher_code} - ${d.first_name} ${d.last_name}</option>`);
+            $('#schedule_teacher_id').html(opts);
+        });
+
+        // Load Periods by Level
+        loadData('schedules.php?periods=1&level=' + level, function(periods) {
+            schedulePeriods = periods;
+            let opts = '<option value="">-- เลือกคาบ --</option>';
+            periods.forEach(p => {
+                const type = p.is_lunch == 1 ? '[พัก]' : `คาบที่ ${p.period_no}`;
+                opts += `<option value="${p.id}" data-start="${p.start_time}" data-end="${p.end_time}">${type} (${p.start_time.substring(0,5)} - ${p.end_time.substring(0,5)})</option>`;
+            });
+            $('#schedule_period_id').html(opts);
+        });
+    });
+
+    $(document).on('change', '#schedule_period_id', function() {
+        const option = $(this).find(':selected');
+        $('#schedule_start_time').val(option.data('start'));
+        $('#schedule_end_time').val(option.data('end'));
+    });
 
     window.loadSchedules = function () {
         loadData('schedules.php', function (data) {
@@ -444,17 +535,22 @@ $(document).ready(function () {
     window.openScheduleModal = function (id = null) {
         $('#scheduleForm')[0].reset();
         $('#schedule_id').val('');
+        $('#schedule_period_id').html('<option value="">-- เลือกคาบ --</option>');
         $('#scheduleModalLabel').text(id ? 'แก้ไขตารางเรียน' : 'เพิ่มตารางเรียน');
+        
         if (id) {
             loadData('schedules.php?id=' + id, function (s) {
                 $('#schedule_id').val(s.id);
                 $('#schedule_subject_id').val(s.subject_id);
-                $('#schedule_teacher_id').val(s.teacher_id);
-                $('#schedule_class_id').val(s.class_id);
-                $('#schedule_classroom_id').val(s.classroom_id);
-                $('#schedule_day').val(s.day_of_week);
-                $('#schedule_start_time').val(s.start_time);
-                $('#schedule_end_time').val(s.end_time);
+                $('#schedule_class_id').val(s.class_id).trigger('change');
+                
+                // Wait for dynamic loads to finish before setting other values
+                setTimeout(() => {
+                    $('#schedule_teacher_id').val(s.teacher_id);
+                    $('#schedule_period_id').val(s.period_id).trigger('change');
+                    $('#schedule_classroom_id').val(s.classroom_id);
+                    $('#schedule_day').val(s.day_of_week);
+                }, 500); // Small delay to let class-triggered loads finish
             });
         }
         new bootstrap.Modal($('#scheduleModal')).show();
@@ -470,6 +566,7 @@ $(document).ready(function () {
             class_id: $('#schedule_class_id').val(),
             classroom_id: $('#schedule_classroom_id').val(),
             day_of_week: $('#schedule_day').val(),
+            period_id: $('#schedule_period_id').val(),
             start_time: $('#schedule_start_time').val(),
             end_time: $('#schedule_end_time').val()
         };
@@ -481,7 +578,17 @@ $(document).ready(function () {
     };
 
     window.removeSchedule = function (id) {
-        deleteData('schedules.php', id, loadSchedules);
+        $('#delete_schedule_id').val(id);
+        new bootstrap.Modal($('#deleteScheduleModal')).show();
+    };
+
+    window.confirmDeleteSchedule = function () {
+        const id = $('#delete_schedule_id').val();
+        deleteData('schedules.php', id, function() {
+            bootstrap.Modal.getInstance($('#deleteScheduleModal')).hide();
+            loadSchedules();
+            showToast('ลบรายการตารางเรียนสำเร็จ', 'success');
+        });
     };
 
     // ========== GRADES MODULE ==========
