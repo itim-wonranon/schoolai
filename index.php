@@ -54,23 +54,75 @@ require_once __DIR__ . '/includes/layout_header.php';
     </div>
 </div>
 
-<div class="row g-4">
+<div class="row g-4" id="dashboardStats">
     <div class="col-lg-6">
-        <div class="card animate-fade-in animate-delay-2">
-            <div class="card-header"><i class="bi bi-pie-chart-fill"></i> สถิติการมาเรียน</div>
+        <div class="card animate-fade-in animate-delay-2 h-100">
+            <div class="card-header"><i class="bi bi-pie-chart-fill"></i> สถิติการมาเรียน (สัดส่วน)</div>
             <div class="card-body">
-                <div class="chart-container">
+                <div class="chart-container" style="height: 300px;">
                     <canvas id="attendanceChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-lg-6">
-        <div class="card animate-fade-in animate-delay-3">
+        <div class="card animate-fade-in animate-delay-3 h-100">
             <div class="card-header"><i class="bi bi-bar-chart-fill"></i> ภาพรวมผลการเรียน (Grade Distribution)</div>
             <div class="card-body">
-                <div class="chart-container">
+                <div class="chart-container" style="height: 300px;">
                     <canvas id="gradeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <!-- Dashboard Attendance List -->
+    <div class="col-lg-6">
+        <div class="card animate-fade-in animate-delay-4 shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-people-fill text-primary me-2"></i> รายชื่อเช็คชื่อล่าสุด (อ้างอิงฐานข้อมูล)</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 400px; min-height: 200px;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr class="small text-uppercase fw-bold">
+                                <th class="ps-4">ชื่อ-นามสกุล</th>
+                                <th>วันที่</th>
+                                <th class="text-center">สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboardAttendanceList">
+                            <tr><td colspan="3" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังดึงข้อมูลจากระบบ...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Grade List -->
+    <div class="col-lg-6">
+        <div class="card animate-fade-in animate-delay-5 shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-journal-text text-success me-2"></i> รายชื่อผลการเรียนล่าสุด (อ้างอิงฐานข้อมูล)</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 400px; min-height: 200px;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr class="small text-uppercase fw-bold">
+                                <th class="ps-4">ชื่อ-นามสกุล</th>
+                                <th>รายวิชา</th>
+                                <th class="text-center">เกรด</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboardGradeList">
+                            <tr><td colspan="3" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังดึงข้อมูลจากระบบ...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

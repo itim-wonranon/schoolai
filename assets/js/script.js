@@ -33,7 +33,7 @@ $(document).ready(function () {
     // ========== GENERIC CRUD HELPERS ==========
     window.loadData = function (url, callback) {
         $.ajax({
-            url: BASE_URL + '/api/' + url,
+            url: 'api/' + url,
             method: 'GET',
             dataType: 'json',
             success: callback,
@@ -46,7 +46,7 @@ $(document).ready(function () {
 
     window.saveData = function (url, data, method, callback) {
         $.ajax({
-            url: BASE_URL + '/api/' + url,
+            url: 'api/' + url,
             method: method,
             data: JSON.stringify(data),
             contentType: 'application/json',
@@ -69,7 +69,7 @@ $(document).ready(function () {
     window.deleteData = function (url, id, callback) {
         if (!confirm('คุณต้องการลบข้อมูลนี้ใช่หรือไม่?')) return;
         $.ajax({
-            url: BASE_URL + '/api/' + url + '?id=' + id,
+            url: 'api/' + url + '?id=' + id,
             method: 'DELETE',
             dataType: 'json',
             success: function (res) {
@@ -87,8 +87,7 @@ $(document).ready(function () {
         });
     };
 
-    // Definitions are moved up...
-
+    // ========== TEACHER MODULE ==========
     window.loadTeachers = function () {
         loadData('teachers.php', function (data) {
             let rows = '';
@@ -151,7 +150,7 @@ $(document).ready(function () {
         deleteData('teachers.php', id, loadTeachers);
     };
 
-
+    // ========== STUDENT MODULE ==========
     window.loadStudents = function () {
         loadData('students.php', function (data) {
             let rows = '';
@@ -224,7 +223,7 @@ $(document).ready(function () {
         deleteData('students.php', id, loadStudents);
     };
 
-
+    // ========== SUBJECT MODULE ==========
     window.loadSubjects = function () {
         loadData('subjects.php', function (data) {
             let rows = '';
@@ -282,7 +281,7 @@ $(document).ready(function () {
         deleteData('subjects.php', id, loadSubjects);
     };
 
-
+    // ========== CLASS MODULE ==========
     window.loadClasses = function () {
         loadData('classes.php', function (data) {
             let rows = '';
@@ -337,7 +336,7 @@ $(document).ready(function () {
         deleteData('classes.php', id, loadClasses);
     };
 
-
+    // ========== CLASSROOM MODULE ==========
     window.loadClassrooms = function () {
         loadData('classrooms.php', function (data) {
             let rows = '';
@@ -392,7 +391,7 @@ $(document).ready(function () {
         deleteData('classrooms.php', id, loadClassrooms);
     };
 
-
+    // ========== SCHEDULE MODULE ==========
     window.loadDropdownOptions = function () {
         loadData('subjects.php', function (data) {
             let opts = '<option value="">-- เลือกรายวิชา --</option>';
@@ -485,7 +484,7 @@ $(document).ready(function () {
         deleteData('schedules.php', id, loadSchedules);
     };
 
-
+    // ========== GRADES MODULE ==========
     window.loadGradeStudents = function () {
         const subjectId = $('#gradeFilterSubject').val();
         const classId = $('#gradeFilterClass').val();
@@ -554,14 +553,18 @@ $(document).ready(function () {
         });
     };
 
-
+    // ========== ATTENDANCE MODULE ==========
     window.loadAttendanceSchedules = function () {
         loadData('attendance.php?action=schedules', function (data) {
             let opts = '<option value="">-- เลือกคาบเรียน --</option>';
+            const dayMap = { Monday: 'จันทร์', Tuesday: 'อังคาร', Wednesday: 'พุธ', Thursday: 'พฤหัสบดี', Friday: 'ศุกร์' };
+            const currentDay = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date());
+            
             data.forEach(function (s) {
-                const dayMap = { Monday: 'จันทร์', Tuesday: 'อังคาร', Wednesday: 'พุธ', Thursday: 'พฤหัสบดี', Friday: 'ศุกร์' };
-                const day = dayMap[s.day_of_week] || s.day_of_week;
-                opts += `<option value="${s.id}">${s.subject_name} - ${s.class_name} (${day} ${s.start_time}-${s.end_time})</option>`;
+                const dayStr = dayMap[s.day_of_week] || s.day_of_week;
+                const isToday = s.day_of_week === currentDay;
+                const todayBadge = isToday ? ' [วันนี้]' : '';
+                opts += `<option value="${s.id}">${s.room_name} : ${s.subject_name} - ${s.class_name} (${dayStr} ${s.start_time}-${s.end_time})${todayBadge}</option>`;
             });
             $('#attendanceFilterSchedule').html(opts);
         });
@@ -579,86 +582,174 @@ $(document).ready(function () {
             if (data.length === 0) {
                 rows = '<tr><td colspan="4" class="text-center py-4 text-muted">ไม่มีนักเรียนในรายการนี้</td></tr>';
             }
-            const statusLabels = {
-                present: '<i class="bi bi-check-circle-fill"></i> มาเรียน',
-                absent: '<i class="bi bi-x-circle-fill"></i> ขาด',
-                late: '<i class="bi bi-clock-fill"></i> สาย',
-                leave: '<i class="bi bi-envelope-fill"></i> ลา'
-            };
-            const statusOrder = ['present', 'absent', 'late', 'leave'];
             data.forEach(function (s, i) {
-                const currentStatus = s.status || 'present';
+                const status = s.status || 'present';
                 rows += `<tr>
                     <td>${i + 1}</td>
                     <td>${s.student_code}</td>
                     <td>${s.first_name} ${s.last_name}</td>
                     <td>
-                        <span class="attendance-status status-${currentStatus}"
-                              data-student-id="${s.student_id}"
-                              data-schedule-id="${scheduleId}"
-                              data-date="${date}"
-                              data-status="${currentStatus}"
-                              onclick="toggleAttendance(this)">
-                              ${statusLabels[currentStatus]}
-                        </span>
+                        <div class="attendance-btn-group" data-student-id="${s.student_id}" data-schedule-id="${scheduleId}" data-date="${date}">
+                            <button class="attendance-btn btn-present ${status === 'present' ? 'active' : ''}" onclick="setAttendance(this, 'present')"><i class="bi bi-check-circle"></i> มา</button>
+                            <button class="attendance-btn btn-absent ${status === 'absent' ? 'active' : ''}" onclick="setAttendance(this, 'absent')"><i class="bi bi-x-circle"></i> ขาด</button>
+                            <button class="attendance-btn btn-late ${status === 'late' ? 'active' : ''}" onclick="setAttendance(this, 'late')"><i class="bi bi-clock"></i> สาย</button>
+                            <button class="attendance-btn btn-leave ${status === 'leave' ? 'active' : ''}" onclick="setAttendance(this, 'leave')"><i class="bi bi-envelope"></i> ลา</button>
+                        </div>
                     </td>
-                </tr>`;
+                </tr>\n`;
             });
             $('#attendanceTable tbody').html(rows);
             $('#attendanceTable').closest('.card').show();
+            $('#attendanceStatusSummary').show();
+            updateAttendanceSummary();
         });
     };
 
-    window.toggleAttendance = function (el) {
-        const $el = $(el);
-        const statusOrder = ['present', 'absent', 'late', 'leave'];
-        const statusLabels = {
-            present: '<i class="bi bi-check-circle-fill"></i> มาเรียน',
-            absent: '<i class="bi bi-x-circle-fill"></i> ขาด',
-            late: '<i class="bi bi-clock-fill"></i> สาย',
-            leave: '<i class="bi bi-envelope-fill"></i> ลา'
-        };
-        let current = $el.data('status');
-        let idx = statusOrder.indexOf(current);
-        let next = statusOrder[(idx + 1) % statusOrder.length];
-
+    window.setAttendance = function (btn, status) {
+        const $group = $(btn).closest('.attendance-btn-group');
         const data = {
-            student_id: $el.data('student-id'),
-            schedule_id: $el.data('schedule-id'),
-            date: $el.data('date'),
-            status: next
+            student_id: $group.data('student-id'),
+            schedule_id: $group.data('schedule-id'),
+            date: $group.data('date'),
+            status: status
         };
 
         $.ajax({
-            url: BASE_URL + '/api/attendance.php',
+            url: 'api/attendance.php',
             method: 'POST',
             data: JSON.stringify(data),
             contentType: 'application/json',
             dataType: 'json',
             success: function (res) {
                 if (res.success) {
-                    $el.data('status', next);
-                    $el.removeClass('status-present status-absent status-late status-leave')
-                       .addClass('status-' + next)
-                       .html(statusLabels[next]);
+                    $group.find('.attendance-btn').removeClass('active');
+                    $(btn).addClass('active');
+                    updateAttendanceSummary();
                 }
             },
             error: function () {
-                showToast('เกิดข้อผิดพลาด', 'error');
+                showToast('เกิดข้อผิดพลาดในการบันทึก', 'error');
             }
         });
     };
 
+    window.markAllAttendance = function(status) {
+        const scheduleId = $('#attendanceFilterSchedule').val();
+        const date = $('#attendanceDate').val();
+        if (!scheduleId || !date) return;
+
+        const promises = [];
+        $('.attendance-btn-group').each(function() {
+            const studentId = $(this).data('student-id');
+            const btn = $(this).find('.btn-' + status);
+            
+            if (!btn.hasClass('active')) {
+                promises.push($.ajax({
+                    url: 'api/attendance.php',
+                    method: 'POST',
+                    data: JSON.stringify({
+                        student_id: studentId,
+                        schedule_id: scheduleId,
+                        date: date,
+                        status: status
+                    }),
+                    contentType: 'application/json'
+                }));
+                $(this).find('.attendance-btn').removeClass('active');
+                btn.addClass('active');
+            }
+        });
+
+        if (promises.length > 0) {
+            Promise.all(promises).then(() => {
+                showToast('อัปเดตทั้งหมดสำเร็จ', 'success');
+                updateAttendanceSummary();
+            }).catch(() => {
+                showToast('มีบางรายการผิดพลาด', 'error');
+                updateAttendanceSummary();
+            });
+        }
+    };
+
+    window.updateAttendanceSummary = function() {
+        const present = $('.attendance-btn.active.btn-present').length;
+        const absent = $('.attendance-btn.active.btn-absent').length;
+        const late = $('.attendance-btn.active.btn-late').length;
+        const leave = $('.attendance-btn.active.btn-leave').length;
+
+        $('#countPresent').text(present);
+        $('#countAbsent').text(absent);
+        $('#countLate').text(late);
+        $('#countLeave').text(leave);
+    };
 
     // ========== DASHBOARD MODULE ==========
     window.loadDashboard = function () {
         $.ajax({
-            url: BASE_URL + '/api/dashboard.php',
+            url: 'api/dashboard.php',
             method: 'GET',
             dataType: 'json',
+            timeout: 10000,
             success: function (data) {
+                console.log('Dashboard Data Received:', data);
+                if (data.error) {
+                    console.error('API Error:', data.error);
+                    showToast('Error: ' + data.error, 'error');
+                    return;
+                }
+                // Populate Dashboard Integrated Lists
+                // Attendance Details (Integrated)
+                if (data.attendance_details && $('#dashboardAttendanceList').length) {
+                    let dAttRows = '';
+                    if (data.attendance_details.length === 0) {
+                        dAttRows = '<tr><td colspan="3" class="text-center py-5 text-muted">ไม่พบข้อมูลการเช็คชื่อในระบบ</td></tr>';
+                    } else {
+                        data.attendance_details.forEach(function (det) {
+                            const statusMap = {
+                                'present': '<span class="badge bg-success shadow-sm px-3">มาเรียน</span>',
+                                'absent': '<span class="badge bg-danger shadow-sm px-3">ขาด</span>',
+                                'late': '<span class="badge bg-warning text-dark shadow-sm px-3">สาย</span>',
+                                'leave': '<span class="badge bg-info shadow-sm px-3">ลา</span>'
+                            };
+                            const displayName = det.first_name ? `${det.first_name} ${det.last_name || ''}` : `<span class="text-muted">[${det.student_code || 'ไม่ทราบรหัส'}]</span>`;
+                            dAttRows += `<tr>
+                                <td class="ps-4 fw-bold text-dark">${displayName}</td>
+                                <td class="text-muted small">${det.attend_date}</td>
+                                <td class="text-center">${statusMap[det.status] || det.status}</td>
+                            </tr>`;
+                        });
+                    }
+                    $('#dashboardAttendanceList').html(dAttRows);
+                }
+
+                // Grade Details (Integrated)
+                if (data.grade_details && $('#dashboardGradeList').length) {
+                    let dGradeRows = '';
+                    if (data.grade_details.length === 0) {
+                        dGradeRows = '<tr><td colspan="3" class="text-center py-5 text-muted">ไม่พบข้อมูลผลการเรียนในระบบ</td></tr>';
+                    } else {
+                        data.grade_details.forEach(function (g) {
+                            const gradeClass = (g.grade !== null && g.grade !== undefined) ? 'grade-' + g.grade : '';
+                            const displayName = g.first_name ? `${g.first_name} ${g.last_name || ''}` : `<span class="text-muted">[${g.student_code || 'ไม่ทราบรหัส'}]</span>`;
+                            dGradeRows += `<tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold text-dark">${displayName}</div>
+                                    <div class="text-muted extra-small" style="font-size: 11px;">${g.class_name || ''}</div>
+                                </td>
+                                <td>
+                                    <span class="text-truncate d-inline-block" style="max-width: 150px;">${g.subject_name || '-'}</span>
+                                </td>
+                                <td class="text-center">
+                                    ${g.grade !== null ? `<span class="grade-badge ${gradeClass} shadow-sm">${g.grade}</span>` : '-'}
+                                </td>
+                            </tr>`;
+                        });
+                    }
+                    $('#dashboardGradeList').html(dGradeRows);
+                }
+
+                // Update stats and charts
                 if (data.stats) {
-                    // Animate numbers
                     animateNumber('#statTeachers', data.stats.teachers);
                     animateNumber('#statStudents', data.stats.students);
                     animateNumber('#statSubjects', data.stats.subjects);
@@ -666,20 +757,17 @@ $(document).ready(function () {
                 }
 
                 if (data.timestamp) {
-                    $('#lastUpdatedTime').text(data.timestamp.split(' ')[1]); // Only show time
+                    $('#lastUpdatedTime').text(data.timestamp.split(' ')[1]);
                     $('#lastUpdatedContainer').fadeIn();
                 }
 
-                // Attendance Chart
+                // Attendance Chart (Doughnut)
                 if (data.attendance && $('#attendanceChart').length) {
                     const ctx = document.getElementById('attendanceChart').getContext('2d');
+                    const chartData = [data.attendance.present, data.attendance.absent, data.attendance.late, data.attendance.leave];
+                    
                     if (window.attendanceChartInstance) {
-                        window.attendanceChartInstance.data.datasets[0].data = [
-                            data.attendance.present, 
-                            data.attendance.absent, 
-                            data.attendance.late, 
-                            data.attendance.leave
-                        ];
+                        window.attendanceChartInstance.data.datasets[0].data = chartData;
                         window.attendanceChartInstance.update();
                     } else {
                         window.attendanceChartInstance = new Chart(ctx, {
@@ -687,7 +775,7 @@ $(document).ready(function () {
                             data: {
                                 labels: ['มาเรียน', 'ขาด', 'สาย', 'ลา'],
                                 datasets: [{
-                                    data: [data.attendance.present, data.attendance.absent, data.attendance.late, data.attendance.leave],
+                                    data: chartData,
                                     backgroundColor: ['#10B981', '#EF4444', '#F59E0B', '#3B82F6'],
                                     borderWidth: 2,
                                     borderColor: '#fff'
@@ -704,17 +792,13 @@ $(document).ready(function () {
                     }
                 }
 
-                // Grade Distribution Chart
+                // Grade Distribution Chart (Bar)
                 if (data.grades && $('#gradeChart').length) {
                     const ctx2 = document.getElementById('gradeChart').getContext('2d');
+                    const gradeData = [data.grades.grade4, data.grades.grade3, data.grades.grade2, data.grades.grade1, data.grades.grade0];
+                    
                     if (window.gradeChartInstance) {
-                        window.gradeChartInstance.data.datasets[0].data = [
-                            data.grades.grade4, 
-                            data.grades.grade3, 
-                            data.grades.grade2, 
-                            data.grades.grade1, 
-                            data.grades.grade0
-                        ];
+                        window.gradeChartInstance.data.datasets[0].data = gradeData;
                         window.gradeChartInstance.update();
                     } else {
                         window.gradeChartInstance = new Chart(ctx2, {
@@ -723,7 +807,7 @@ $(document).ready(function () {
                                 labels: ['เกรด 4', 'เกรด 3', 'เกรด 2', 'เกรด 1', 'เกรด 0'],
                                 datasets: [{
                                     label: 'จำนวนนักเรียน',
-                                    data: [data.grades.grade4, data.grades.grade3, data.grades.grade2, data.grades.grade1, data.grades.grade0],
+                                    data: gradeData,
                                     backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#F97316', '#EF4444'],
                                     borderRadius: 8,
                                     borderSkipped: false
@@ -744,13 +828,14 @@ $(document).ready(function () {
                     }
                 }
             },
-            error: function (xhr) {
-                console.error('Dashboard load error:', xhr.responseText);
+            error: function (xhr, status, err) {
+                console.error('Dashboard load error:', status, err, xhr.responseText);
+                const errorMsg = `Error: ${status} ${err}`;
+                $('#dashboardAttendanceList').html(`<tr><td colspan="3" class="text-center text-danger py-4">${errorMsg}</td></tr>`);
+                $('#dashboardGradeList').html(`<tr><td colspan="3" class="text-center text-danger py-4">${errorMsg}</td></tr>`);
             }
         });
     };
-
-    // Helper to animate numbers
     function animateNumber(selector, target) {
         const el = $(selector);
         const current = parseInt(el.text()) || 0;
@@ -802,7 +887,6 @@ $(document).ready(function () {
     
     if ($('#dashboardStats').length) {
         loadDashboard();
-        // Start real-time polling every 5 seconds
         setInterval(loadDashboard, 5000);
     }
 

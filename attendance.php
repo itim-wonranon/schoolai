@@ -10,11 +10,19 @@ require_once __DIR__ . '/includes/layout_header.php';
 </div>
 
 <div class="card mb-4">
-    <div class="card-header"><i class="bi bi-funnel"></i> เลือกคาบเรียน</div>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-funnel"></i> เลือกคาบเรียน</span>
+        <div id="attendanceStatusSummary" style="display:none;">
+            <span class="badge bg-success me-1">มา: <span id="countPresent">0</span></span>
+            <span class="badge bg-danger me-1">ขาด: <span id="countAbsent">0</span></span>
+            <span class="badge bg-warning text-dark me-1">สาย: <span id="countLate">0</span></span>
+            <span class="badge bg-primary">ลา: <span id="countLeave">0</span></span>
+        </div>
+    </div>
     <div class="card-body">
         <div class="filter-bar">
-            <div class="form-group">
-                <label class="form-label">คาบเรียน</label>
+            <div class="form-group" style="flex:2;">
+                <label class="form-label">คาบเรียน (เรียงตามวันปัจจุบัน)</label>
                 <select class="form-select" id="attendanceFilterSchedule">
                     <option value="">-- เลือกคาบเรียน --</option>
                 </select>
@@ -34,9 +42,12 @@ require_once __DIR__ . '/includes/layout_header.php';
 </div>
 
 <div class="card" style="display:none;">
-    <div class="card-header">
-        <i class="bi bi-people"></i> รายชื่อนักเรียน
-        <small class="text-muted ms-2">(คลิกที่สถานะเพื่อเปลี่ยน)</small>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-people"></i> รายชื่อนักเรียน</span>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-secondary" onclick="markAllAttendance('present')">มาทั้งหมด</button>
+            <button class="btn btn-outline-secondary" onclick="markAllAttendance('absent')">ขาดทั้งหมด</button>
+        </div>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -46,7 +57,7 @@ require_once __DIR__ . '/includes/layout_header.php';
                         <th width="50">#</th>
                         <th>รหัสนักเรียน</th>
                         <th>ชื่อ-นามสกุล</th>
-                        <th width="160">สถานะ</th>
+                        <th width="280">การเช็คชื่อ</th>
                     </tr>
                 </thead>
                 <tbody></tbody>

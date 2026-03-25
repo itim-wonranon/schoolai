@@ -541,6 +541,43 @@ a { text-decoration: none; color: inherit; transition: var(--transition); }
 .status-late    { background: #FEF3C7; color: #92400E; border-color: #FCD34D; }
 .status-leave   { background: #DBEAFE; color: #1E40AF; border-color: #93C5FD; }
 
+/* Attendance Button Group */
+.attendance-btn-group {
+    display: flex;
+    gap: 4px;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 30px;
+    width: fit-content;
+}
+
+.attendance-btn {
+    border: none;
+    background: transparent;
+    padding: 6px 12px;
+    border-radius: 25px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    transition: var(--transition);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.attendance-btn:hover { background: rgba(255,255,255,0.5); }
+
+.attendance-btn.active.btn-present { background: var(--success); color: #fff; }
+.attendance-btn.active.btn-absent  { background: var(--danger); color: #fff; }
+.attendance-btn.active.btn-late    { background: var(--warning); color: #fff; }
+.attendance-btn.active.btn-leave   { background: var(--info); color: #fff; }
+
+.attendance-btn.active {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transform: scale(1.05);
+}
+
 /* ---------- Grade Badges ---------- */
 .grade-badge {
     display: inline-flex;
@@ -762,7 +799,7 @@ a { text-decoration: none; color: inherit; transition: var(--transition); }
 .empty-state i {
     font-size: 3.5rem;
     margin-bottom: 16px;
-    opaci: 0.5;
+    opacity: 0.5;
 }
 
 .empty-state p {

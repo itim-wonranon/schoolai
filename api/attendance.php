@@ -14,20 +14,22 @@ try {
         case 'GET':
             // Get schedules for attendance dropdown
             if (isset($_GET['action']) && $_GET['action'] === 'schedules') {
+                $currentDay = date('l'); // e.g., 'Monday'
+                $sql = "SELECT s.*, sub.subject_name, c.class_name, r.room_name
+                        FROM schedules s
+                        JOIN subjects sub ON s.subject_id = sub.id
+                        JOIN classes c ON s.class_id = c.id
+                        JOIN classrooms r ON s.classroom_id = r.id";
+                
                 if ($role === 'teacher') {
-                    $stmt = $pdo->prepare("SELECT s.*, sub.subject_name, c.class_name
-                        FROM schedules s
-                        JOIN subjects sub ON s.subject_id = sub.id
-                        JOIN classes c ON s.class_id = c.id
-                        WHERE s.teacher_id = ?
-                        ORDER BY FIELD(s.day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday'), s.start_time");
-                    $stmt->execute([$refId]);
+                    $sql .= " WHERE s.teacher_id = ?";
+                    $sql .= " ORDER BY (s.day_of_week = ?) DESC, FIELD(s.day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday'), s.start_time";
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute([$refId, $currentDay]);
                 } else {
-                    $stmt = $pdo->query("SELECT s.*, sub.subject_name, c.class_name
-                        FROM schedules s
-                        JOIN subjects sub ON s.subject_id = sub.id
-                        JOIN classes c ON s.class_id = c.id
-                        ORDER BY FIELD(s.day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday'), s.start_time");
+                    $sql .= " ORDER BY (s.day_of_week = ?) DESC, FIELD(s.day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday'), s.start_time";
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute([$currentDay]);
                 }
                 echo json_encode($stmt->fetchAll());
                 break;

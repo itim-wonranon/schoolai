@@ -14,6 +14,6 @@
     <script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>const BASE_URL = '<?php echo $base_url; ?>';</script>
-    <script src="<?php echo $base_url; ?>/assets/js/script.js"></script>
+    <script src="<?php echo $base_url; ?>/assets/js/script.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

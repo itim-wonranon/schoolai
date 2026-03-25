@@ -1,9 +1,19 @@
 <?php
+ob_start();
 require_once __DIR__ . '/../includes/session_check.php';
 require_once __DIR__ . '/../config/db.php';
-requireLogin();
 
+// Reliable AJAX JSON response header
 header('Content-Type: application/json');
+
+// Check login without redirect for AJAX
+if (!isLoggedIn()) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthenticated', 'message' => 'Session expired. Please log in again.']);
+    exit;
+}
+session_write_close();
+
 $pdo = getDB();
 
 try {
@@ -12,13 +22,13 @@ try {
 
     // Stats counts
     $result['stats'] = [
-        'teachers'   => $pdo->query("SELECT COUNT(*) FROM teachers")->fetchColumn(),
-        'students'   => $pdo->query("SELECT COUNT(*) FROM students")->fetchColumn(),
-        'subjects'   => $pdo->query("SELECT COUNT(*) FROM subjects")->fetchColumn(),
-        'classrooms' => $pdo->query("SELECT COUNT(*) FROM classrooms")->fetchColumn(),
+        'teachers'   => (int)$pdo->query("SELECT COUNT(*) FROM teachers")->fetchColumn(),
+        'students'   => (int)$pdo->query("SELECT COUNT(*) FROM students")->fetchColumn(),
+        'subjects'   => (int)$pdo->query("SELECT COUNT(*) FROM subjects")->fetchColumn(),
+        'classrooms' => (int)$pdo->query("SELECT COUNT(*) FROM classrooms")->fetchColumn(),
     ];
 
-    // Attendance summary (Total aggregated)
+    // Attendance summary (Aggregated)
     $attStmt = $pdo->query("SELECT
         SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) AS present,
         SUM(CASE WHEN status = 'absent'  THEN 1 ELSE 0 END) AS absent,
@@ -50,9 +60,32 @@ try {
         'grade0' => (int)($gr['grade0'] ?? 0),
     ];
 
-    echo json_encode($result);
+    // Detailed Attendance
+    $attDetailed = $pdo->query("SELECT a.attend_date, s.first_name, s.last_name, s.student_code, a.status
+        FROM attendance a
+        LEFT JOIN students s ON a.student_id = s.id
+        ORDER BY a.id DESC LIMIT 5");
+    $result['attendance_details'] = $attDetailed->fetchAll(PDO::FETCH_ASSOC);
 
-} catch (PDOException $e) {
+    // Detailed Grade List
+    $gradeDetailed = $pdo->query("SELECT s.first_name, s.last_name, s.student_code, c.class_name, sub.subject_name, g.grade
+        FROM grades g
+        LEFT JOIN students s ON g.student_id = s.id
+        LEFT JOIN classes c ON s.class_id = c.id
+        LEFT JOIN subjects sub ON g.subject_id = sub.id
+        ORDER BY g.id DESC LIMIT 5");
+    $result['grade_details'] = $gradeDetailed->fetchAll(PDO::FETCH_ASSOC);
+
+    // Clean any prior output and send JSON
+    ob_clean();
+    echo json_encode($result, JSON_UNESCAPED_UNICODE);
+
+} catch (Exception $e) {
+    ob_clean();
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode([
+        'error' => 'Internal Server Error',
+        'message' => $e->getMessage()
+    ]);
 }
+?>
