@@ -100,13 +100,21 @@ $(document).ready(function () {
                     '<span class="badge bg-warning text-dark"><i class="bi bi-mortarboard"></i> มัธยมปลาย</span>' : 
                     '<span class="badge bg-info text-dark"><i class="bi bi-book"></i> มัธยมต้น</span>';
                 
+                // Handle multiple homeroom classes as badges
+                let homeroomHtml = '<span class="text-muted small">-</span>';
+                if (t.homeroom_class_name) {
+                    homeroomHtml = t.homeroom_class_name.split(', ').map(c => 
+                        `<span class="badge bg-white text-dark border shadow-sm me-1 mb-1">${c}</span>`
+                    ).join('');
+                }
+                
                 rows += `<tr class="animate-fade-in align-middle">
                     <td>${i + 1}</td>
                     <td><img src="${profileImg}" class="rounded-circle shadow-sm" style="width: 40px; height: 40px; object-fit: cover;"></td>
                     <td><strong>${t.teacher_code}</strong></td>
                     <td>${t.first_name} ${t.last_name}</td>
                     <td>${levelBadge}</td>
-                    <td>${t.homeroom_class_name || '<span class="text-muted small">-</span>'}</td>
+                    <td><div class="d-flex flex-wrap">${homeroomHtml}</div></td>
                     <td>${t.department || '-'}</td>
                     <td>
                         <button class="btn-icon btn-edit" onclick="editTeacher(${t.id})" title="แก้ไข"><i class="bi bi-pencil-square"></i></button>
@@ -135,27 +143,19 @@ $(document).ready(function () {
         $('#profilePreview').attr('src', 'assets/images/default-avatar.png');
         $('#teacherModalLabel').text(id ? 'แก้ไขข้อมูลครู' : 'เพิ่มข้อมูลครู');
         
-        // Load classes for homeroom select
-        loadData('classes.php', function (classes) {
-            let opts = '<option value="">-- ไม่ได้เป็นครูประจำชั้น --</option>';
-            classes.forEach(c => opts += `<option value="${c.id}">${c.class_name}</option>`);
-            $('#teacher_homeroom_class_id').html(opts);
-            
-            if (id) {
-                loadData('teachers.php?id=' + id, function (t) {
-                    $('#teacher_id').val(t.id);
-                    $('#teacher_action').val('UPDATE');
-                    $('#teacher_code').val(t.teacher_code);
-                    $('#teacher_first_name').val(t.first_name);
-                    $('#teacher_last_name').val(t.last_name);
-                    $('#teacher_phone').val(t.phone);
-                    $('#teacher_department').val(t.department);
-                    $('#teacher_teaching_level').val(t.teaching_level);
-                    $('#teacher_homeroom_class_id').val(t.homeroom_class_id);
-                    if (t.profile_image) $('#profilePreview').attr('src', t.profile_image);
-                });
-            }
-        });
+        if (id) {
+            loadData('teachers.php?id=' + id, function (t) {
+                $('#teacher_id').val(t.id);
+                $('#teacher_action').val('UPDATE');
+                $('#teacher_code').val(t.teacher_code);
+                $('#teacher_first_name').val(t.first_name);
+                $('#teacher_last_name').val(t.last_name);
+                $('#teacher_phone').val(t.phone);
+                $('#teacher_department').val(t.department);
+                $('#teacher_teaching_level').val(t.teaching_level);
+                if (t.profile_image) $('#profilePreview').attr('src', t.profile_image);
+            });
+        }
         
         new bootstrap.Modal($('#teacherModal')).show();
     };
@@ -347,6 +347,7 @@ $(document).ready(function () {
                     <td>${i + 1}</td>
                     <td><strong>${c.class_code}</strong></td>
                     <td>${c.class_name}</td>
+                    <td>${c.homeroom_teacher_name || '<span class="text-muted small">ยังไม่กำหนด</span>'}</td>
                     <td>
                         <button class="btn-icon btn-edit" onclick="editClass(${c.id})" title="แก้ไข"><i class="bi bi-pencil-square"></i></button>
                         <button class="btn-icon btn-delete" onclick="removeClass(${c.id})" title="ลบ"><i class="bi bi-trash3"></i></button>
@@ -361,14 +362,27 @@ $(document).ready(function () {
         $('#classForm')[0].reset();
         $('#class_id').val('');
         $('#classModalLabel').text(id ? 'แก้ไขข้อมูลชั้นเรียน' : 'เพิ่มข้อมูลชั้นเรียน');
-        if (id) {
-            loadData('classes.php?id=' + id, function (c) {
-                $('#class_id').val(c.id);
-                $('#class_code').val(c.class_code);
-                $('#class_name').val(c.class_name);
+        
+        // Load teachers for selection
+        loadData('teachers.php', function(teachers) {
+            let opts = '<option value="">-- เลือกครูประจำชั้น --</option>';
+            teachers.forEach(t => {
+                opts += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`;
             });
-        }
-        new bootstrap.Modal($('#classModal')).show();
+            $('#homeroom_teacher_id').html(opts);
+
+            if (id) {
+                loadData('classes.php?id=' + id, function (c) {
+                    $('#class_id').val(c.id);
+                    $('#class_code').val(c.class_code);
+                    $('#class_name').val(c.class_name);
+                    $('#homeroom_teacher_id').val(c.homeroom_teacher_id || '');
+                    new bootstrap.Modal($('#classModal')).show();
+                });
+            } else {
+                new bootstrap.Modal($('#classModal')).show();
+            }
+        });
     };
 
     window.editClass = function (id) { openClassModal(id); };
@@ -377,7 +391,8 @@ $(document).ready(function () {
         const data = {
             id: $('#class_id').val(),
             class_code: $('#class_code').val(),
-            class_name: $('#class_name').val()
+            class_name: $('#class_name').val(),
+            homeroom_teacher_id: $('#homeroom_teacher_id').val()
         };
         const method = data.id ? 'PUT' : 'POST';
         saveData('classes.php', data, method, function () {
@@ -697,6 +712,7 @@ $(document).ready(function () {
                     <td>${s.first_name} ${s.last_name}</td>
                     <td>
                         <div class="attendance-btn-group" data-student-id="${s.student_id}" data-schedule-id="${scheduleId}" data-date="${date}">
+                            <div class="attendance-indicator"></div>
                             <button class="attendance-btn btn-present ${status === 'present' ? 'active' : ''}" onclick="setAttendance(this, 'present')"><i class="bi bi-check-circle-fill"></i> มาเรียน</button>
                             <button class="attendance-btn btn-absent ${status === 'absent' ? 'active' : ''}" onclick="setAttendance(this, 'absent')"><i class="bi bi-x-circle-fill"></i> ขาดเรียน</button>
                             <button class="attendance-btn btn-late ${status === 'late' ? 'active' : ''}" onclick="setAttendance(this, 'late')"><i class="bi bi-clock-fill"></i> สาย</button>
@@ -708,36 +724,78 @@ $(document).ready(function () {
             $('#attendanceTable tbody').html(rows);
             $('#attendanceTable').closest('.card').show();
             $('#attendanceStatusSummary').show();
+            
+            // Initialization of sliding indicators
+            setTimeout(() => {
+                $('.attendance-btn-group').each(function() {
+                    moveIndicator($(this));
+                });
+            }, 100);
+            
             updateAttendanceSummary();
         });
     };
 
+    window.moveIndicator = function($group) {
+        const $active = $group.find('.attendance-btn.active');
+        const $indicator = $group.find('.attendance-indicator');
+        if ($active.length && $indicator.length) {
+            // Determine status for color
+            $indicator.removeClass('indicator-present indicator-absent indicator-late indicator-leave');
+            if ($active.hasClass('btn-present')) $indicator.addClass('indicator-present');
+            else if ($active.hasClass('btn-absent')) $indicator.addClass('indicator-absent');
+            else if ($active.hasClass('btn-late')) $indicator.addClass('indicator-late');
+            else if ($active.hasClass('btn-leave')) $indicator.addClass('indicator-leave');
+
+            $indicator.css({
+                width: $active.outerWidth() + 'px',
+                left: $active.position().left + 'px',
+                opacity: 1
+            });
+        }
+    };
+
     window.setAttendance = function (btn, status) {
-        const $group = $(btn).closest('.attendance-btn-group');
-        const data = {
-            student_id: $group.data('student-id'),
-            schedule_id: $group.data('schedule-id'),
-            date: $group.data('date'),
-            status: status
-        };
+        const $btn = $(btn);
+        const $group = $btn.closest('.attendance-btn-group');
+        const $oldActive = $group.find('.attendance-btn.active');
+        const studentId = $group.data('student-id');
+        const scheduleId = $group.data('schedule-id');
+        const date = $group.data('date');
+
+        if ($btn.hasClass('active')) return;
+
+        // Optimistic Update
+        $oldActive.removeClass('active');
+        $btn.addClass('active saving');
+        moveIndicator($group);
+        updateAttendanceSummary();
 
         $.ajax({
             url: 'api/attendance.php',
             method: 'POST',
-            data: JSON.stringify(data),
+            data: JSON.stringify({ student_id: studentId, schedule_id: scheduleId, date: date, status: status }),
             contentType: 'application/json',
-            dataType: 'json',
             success: function (res) {
-                if (res.success) {
-                    $group.find('.attendance-btn').removeClass('active');
-                    $(btn).addClass('active');
-                    updateAttendanceSummary();
+                $btn.removeClass('saving');
+                if (!res.success) {
+                    rollback();
+                    showToast(res.message || 'บันทึกไม่สำเร็จ', 'error');
                 }
             },
             error: function () {
-                showToast('เกิดข้อผิดพลาดในการบันทึก', 'error');
+                rollback();
+                showToast('การเชื่อมต่อล้มเหลว', 'error');
             }
         });
+
+        function rollback() {
+            $btn.removeClass('active saving');
+            $oldActive.addClass('active');
+            $group.addClass('shake');
+            setTimeout(() => $group.removeClass('shake'), 400);
+            updateAttendanceSummary();
+        }
     };
 
     window.markAllAttendance = function(status) {
@@ -788,6 +846,10 @@ $(document).ready(function () {
         $('#countAbsent').text(absent);
         $('#countLate').text(late);
         $('#countLeave').text(leave);
+        
+        if (present + absent + late + leave > 0) {
+            $('#attendanceStatusSummary').fadeIn();
+        }
     };
 
     // ========== DASHBOARD MODULE ==========

@@ -90,12 +90,6 @@ require_once __DIR__ . '/includes/layout_header.php';
                                     <input type="text" class="form-control" name="department" id="teacher_department">
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">ครูประจำชั้น (ถ้ามี)</label>
-                                <select class="form-select" name="homeroom_class_id" id="teacher_homeroom_class_id">
-                                    <option value="">-- ไม่ได้เป็นครูประจำชั้น --</option>
-                                </select>
-                            </div>
                         </div>
                     </div>
                 </form>

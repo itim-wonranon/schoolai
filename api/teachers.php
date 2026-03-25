@@ -35,16 +35,18 @@ try {
     switch ($method) {
         case 'GET':
             if (isset($_GET['id'])) {
-                $stmt = $pdo->prepare("SELECT t.*, c.class_name as homeroom_class_name 
+                $stmt = $pdo->prepare("SELECT t.*, GROUP_CONCAT(c.class_name SEPARATOR ', ') as homeroom_class_name 
                                      FROM teachers t 
-                                     LEFT JOIN classes c ON t.homeroom_class_id = c.id 
-                                     WHERE t.id = ?");
+                                     LEFT JOIN classes c ON c.homeroom_teacher_id = t.id 
+                                     WHERE t.id = ?
+                                     GROUP BY t.id");
                 $stmt->execute([$_GET['id']]);
                 echo json_encode($stmt->fetch());
             } else {
-                $stmt = $pdo->query("SELECT t.*, c.class_name as homeroom_class_name 
+                $stmt = $pdo->query("SELECT t.*, GROUP_CONCAT(c.class_name SEPARATOR ', ') as homeroom_class_name 
                                    FROM teachers t 
-                                   LEFT JOIN classes c ON t.homeroom_class_id = c.id 
+                                   LEFT JOIN classes c ON c.homeroom_teacher_id = t.id 
+                                   GROUP BY t.id
                                    ORDER BY t.id");
                 echo json_encode($stmt->fetchAll());
             }
@@ -53,8 +55,8 @@ try {
         case 'POST':
             $imagePath = handleImageUpload($_FILES['profile_image'] ?? null);
             
-            $stmt = $pdo->prepare("INSERT INTO teachers (teacher_code, first_name, last_name, phone, department, teaching_level, profile_image, homeroom_class_id) 
-                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO teachers (teacher_code, first_name, last_name, phone, department, teaching_level, profile_image) 
+                                 VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $_POST['teacher_code'], 
                 $_POST['first_name'], 
@@ -62,8 +64,7 @@ try {
                 $_POST['phone'] ?? null, 
                 $_POST['department'] ?? null,
                 $_POST['teaching_level'] ?? 'middle',
-                $imagePath,
-                !empty($_POST['homeroom_class_id']) ? $_POST['homeroom_class_id'] : null
+                $imagePath
             ]);
             echo json_encode(['success' => true, 'message' => 'เพิ่มข้อมูลครูสำเร็จ']);
             break;
@@ -73,15 +74,14 @@ try {
             $id = $_POST['id'];
             $imagePath = handleImageUpload($_FILES['profile_image'] ?? null);
             
-            $sql = "UPDATE teachers SET teacher_code=?, first_name=?, last_name=?, phone=?, department=?, teaching_level=?, homeroom_class_id=? ";
+            $sql = "UPDATE teachers SET teacher_code=?, first_name=?, last_name=?, phone=?, department=?, teaching_level=? ";
             $params = [
                 $_POST['teacher_code'], 
                 $_POST['first_name'], 
                 $_POST['last_name'], 
                 $_POST['phone'] ?? null, 
                 $_POST['department'] ?? null,
-                $_POST['teaching_level'] ?? 'middle',
-                !empty($_POST['homeroom_class_id']) ? $_POST['homeroom_class_id'] : null
+                $_POST['teaching_level'] ?? 'middle'
             ];
             
             if ($imagePath) {

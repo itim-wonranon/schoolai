@@ -541,46 +541,91 @@ a { text-decoration: none; color: inherit; transition: var(--transition); }
 .status-late    { background: #FEF3C7; color: #92400E; border-color: #FCD34D; }
 .status-leave   { background: #DBEAFE; color: #1E40AF; border-color: #93C5FD; }
 
-/* Attendance Pill Control */
+/* Sliding Attendance Pill Control */
 .attendance-btn-group {
-    display: flex;
-    gap: 0;
-    background: #f1f5f9;
-    padding: 3px;
-    border-radius: 40px;
-    width: fit-content;
-    border: 1px solid #e2e8f0;
+    display: inline-flex;
+    background: #e2e8f0;
+    padding: 2px;
+    border-radius: 50px;
+    position: relative;
+    user-select: none;
+    border: 1px solid #cbd5e1;
 }
 
 .attendance-btn {
     border: none;
     background: transparent;
-    padding: 8px 16px;
-    border-radius: 35px;
-    font-size: 0.82rem;
+    padding: 8px 18px;
+    border-radius: 40px;
+    font-size: 0.85rem;
     font-weight: 700;
     color: #64748b;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 2;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 6px;
-    opacity: 0.7;
+    transition: color 0.3s ease;
+    white-space: nowrap;
 }
-
-.attendance-btn:hover { opacity: 1; background: rgba(255,255,255,0.8); }
 
 .attendance-btn.active {
-    opacity: 1;
     color: #fff !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    transform: scale(1.05);
 }
 
-.btn-present.active { background: linear-gradient(135deg, #10B981, #059669) !important; }
-.btn-absent.active  { background: linear-gradient(135deg, #EF4444, #DC2626) !important; }
-.btn-late.active    { background: linear-gradient(135deg, #F59E0B, #D97706) !important; }
-.btn-leave.active   { background: linear-gradient(135deg, #3B82F6, #2563EB) !important; }
+.attendance-btn i {
+    font-size: 1rem;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.attendance-btn.active i {
+    transform: scale(1.3) rotate(5deg);
+}
+
+/* The Sliding Background */
+.attendance-indicator {
+    position: absolute;
+    height: calc(100% - 4px);
+    width: 0; /* Updated by JS */
+    left: 2px; /* Updated by JS */
+    border-radius: 40px;
+    z-index: 1;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* Status colors for indicator */
+.indicator-present { background: linear-gradient(135deg, #10b981, #059669); }
+.indicator-absent  { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.indicator-late    { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.indicator-leave   { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+
+/* Animation when clicking */
+.attendance-btn:active {
+    transform: scale(0.92);
+}
+
+/* Loading/Saving state */
+.attendance-btn.saving i {
+    animation: bounceSpin 0.8s infinite;
+}
+
+@keyframes bounceSpin {
+    0% { transform: scale(1.3) rotate(0deg); }
+    50% { transform: scale(1.5) rotate(180deg); }
+    100% { transform: scale(1.3) rotate(360deg); }
+}
+
+.attendance-btn-group.shake {
+    animation: pillShake 0.4s ease-in-out;
+}
+@keyframes pillShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+}
 
 /* ---------- Grade Badges ---------- */
 .grade-badge {

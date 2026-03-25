@@ -21,11 +21,12 @@ require_once __DIR__ . '/includes/layout_header.php';
                         <th width="50">#</th>
                         <th>รหัสชั้นเรียน</th>
                         <th>ชื่อชั้นเรียน</th>
+                        <th>ครูประจำชั้น</th>
                         <th width="100">จัดการ</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td colspan="4" class="text-center py-4"><div class="loading-spinner"></div></td></tr>
+                    <tr><td colspan="5" class="text-center py-4"><div class="loading-spinner"></div></td></tr>
                 </tbody>
             </table>
         </div>
@@ -50,6 +51,12 @@ require_once __DIR__ . '/includes/layout_header.php';
                     <div class="mb-3">
                         <label class="form-label">ชื่อชั้นเรียน *</label>
                         <input type="text" class="form-control" id="class_name" required placeholder="เช่น ม.1/3">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ครูประจำชั้น</label>
+                        <select class="form-select" id="homeroom_teacher_id">
+                            <option value="">-- เลือกครูประจำชั้น --</option>
+                        </select>
                     </div>
                 </form>
             </div>

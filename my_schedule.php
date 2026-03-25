@@ -26,7 +26,7 @@ require_once __DIR__ . '/includes/layout_header.php';
             <table class="table table-bordered mb-0 timetable-grid">
                 <thead>
                     <tr class="bg-light text-center">
-                        <th style="width: 140px;" class="py-3 border-0">เวลา / คาบ</th>
+                        <th style="width: 140px;" class="py-3 border-0">คาบ/เวลา</th>
                         <th class="py-3 border-0">จันทร์</th>
                         <th class="py-3 border-0">อังคาร</th>
                         <th class="py-3 border-0">พุธ</th>
