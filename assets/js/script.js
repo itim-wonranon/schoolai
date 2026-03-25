@@ -697,10 +697,10 @@ $(document).ready(function () {
                     <td>${s.first_name} ${s.last_name}</td>
                     <td>
                         <div class="attendance-btn-group" data-student-id="${s.student_id}" data-schedule-id="${scheduleId}" data-date="${date}">
-                            <button class="attendance-btn btn-present ${status === 'present' ? 'active' : ''}" onclick="setAttendance(this, 'present')"><i class="bi bi-check-circle"></i> มา</button>
-                            <button class="attendance-btn btn-absent ${status === 'absent' ? 'active' : ''}" onclick="setAttendance(this, 'absent')"><i class="bi bi-x-circle"></i> ขาด</button>
-                            <button class="attendance-btn btn-late ${status === 'late' ? 'active' : ''}" onclick="setAttendance(this, 'late')"><i class="bi bi-clock"></i> สาย</button>
-                            <button class="attendance-btn btn-leave ${status === 'leave' ? 'active' : ''}" onclick="setAttendance(this, 'leave')"><i class="bi bi-envelope"></i> ลา</button>
+                            <button class="attendance-btn btn-present ${status === 'present' ? 'active' : ''}" onclick="setAttendance(this, 'present')"><i class="bi bi-check-circle-fill"></i> มาเรียน</button>
+                            <button class="attendance-btn btn-absent ${status === 'absent' ? 'active' : ''}" onclick="setAttendance(this, 'absent')"><i class="bi bi-x-circle-fill"></i> ขาดเรียน</button>
+                            <button class="attendance-btn btn-late ${status === 'late' ? 'active' : ''}" onclick="setAttendance(this, 'late')"><i class="bi bi-clock-fill"></i> สาย</button>
+                            <button class="attendance-btn btn-leave ${status === 'leave' ? 'active' : ''}" onclick="setAttendance(this, 'leave')"><i class="bi bi-envelope-fill"></i> ลา</button>
                         </div>
                     </td>
                 </tr>\n`;

@@ -105,7 +105,24 @@ try {
         // Conflict Detection (Robust overlap check)
         $sTime = $data['start_time'];
         $eTime = $data['end_time'];
-        $day = $data['day_of_week'];
+        $day = $data['day_of_week'] ?? '';
+
+        // 0. Level Validation (Teacher Level must match Class Level)
+        $stmtTLevel = $pdo->prepare("SELECT teaching_level FROM teachers WHERE id = ?");
+        $stmtTLevel->execute([$data['teacher_id']]);
+        $tLevel = $stmtTLevel->fetchColumn();
+
+        $stmtCLevel = $pdo->prepare("SELECT class_name FROM classes WHERE id = ?");
+        $stmtCLevel->execute([$data['class_id']]);
+        $cName = $stmtCLevel->fetchColumn();
+        $cLevel = (preg_match('/ม\.[1-3]/u', $cName)) ? 'middle' : 'high';
+
+        if ($tLevel !== $cLevel) {
+            $levelTh = $tLevel === 'high' ? 'มัธยมปลาย' : 'มัธยมต้น';
+            $targetTh = $cLevel === 'high' ? 'มัธยมปลาย' : 'มัธยมต้น';
+            echo json_encode(['success' => false, 'message' => "ครูท่านนี้เป็นครูระดับ $levelTh ไม่สามารถสอนห้องเรียนระดับ $targetTh ได้"]);
+            exit;
+        }
 
         // 1. Teacher conflict
         $stmtConflict = $pdo->prepare("SELECT COUNT(*) FROM schedules WHERE teacher_id = ? AND day_of_week = ? AND id != ? AND NOT (end_time <= ? OR start_time >= ?)");
